@@ -11,6 +11,7 @@ bool debug;
 class Node {
   public:
   Node(std::string l) : label(l) { numIn = numOut = numCall = 0; size_t i = l.find_last_of('_'); lineno = atoi(l.substr(i+1).c_str());}
+  Node(Node *np) { lineno = np->lineno; numIn = np->numIn; numOut = np->numOut; numCall=np->numCall; label = np->label; toList = np->toList; callList = np->callList; }
   int lineno;
   int numIn;
   int numOut;
@@ -19,6 +20,21 @@ class Node {
   std::vector<std::string> toList;
   std::vector<std::string> callList;
 };
+
+class SB {
+  public:
+  SB(const std::string &n) : name(n) { }
+  SB(const std::string &n, std::vector<Node> &l) : name(n), list(l) { }
+  bool addNode(const Node &n);
+  void addConstraint(const std::string s);
+  bool addTolist(std::vector<Node> &fullList);
+  bool isContained();
+  const std::string name;
+  std::vector<Node> list; 
+  std::vector<std::string> constraints; // external function calls
+};
+
+std::vector<SB> sbv;
 
 void ppnode(Node *n)
 {
@@ -30,20 +46,18 @@ void ppnode(Node *n)
   printf("\n");
 }
 
-class SB {
-  public:
-  SB(const std::string &n) : name(n) { }
-  SB(const std::string &n, std::vector<Node> &l) : name(n), list(l) { }
-  void addNode(const Node &n);
-  void addConstraint(const std::string s);
-  bool addTolist(const std::vector<Node> &fullList, int level);
-  bool isContained(const std::vector<Node> &fullList);
-  const std::string name;
-  std::vector<Node> list; 
-  std::vector<std::string> constraints; // external function calls
-};
-
-std::vector<SB> sbv;
+Node *findNode(std::vector<Node> &list, std::string &label)
+{
+  for (std::vector<Node>::iterator it = list.begin() ; it != list.end(); ++it) {
+    if (it->label.compare(label) == 0) {
+//printf("] found %s (%s) @ %p\n", it->label.c_str(), label.c_str(), it);
+      return &(*it);
+    }
+  }
+  Node *node = new Node(label);
+  list.push_back(*node);
+  return findNode(list, label); // go find the new entry, and return it
+}
 
 void ppsbv() // TODO
 {
@@ -57,20 +71,88 @@ bool listContainsLabel(const std::vector<std::string> list, const std::string la
   return false;
 }
 
-bool SB::isContained(const std::vector<Node> &fullList) // TODO
+bool SB::isContained()
 {
   int numOutMiss = 0;
   for (int ni = 0; ni < this->list.size(); ++ni) {
     for (int li = 0; li < this->list[ni].toList.size(); ++li) {
-      
+      std::string needle = this->list[ni].toList[li];
+      bool found = false;
+      for (int ni2 = 0; ni2 < this->list.size(); ++ni2) {
+        if (needle.compare(this->list[ni2].label) == 0) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        numOutMiss++;
+      }
     }
+  }
+  if (numOutMiss < 2) {
+    return true;
   }
   return false;
 }
 
-bool SB::addTolist(const std::vector<Node> &fullList, int level) // TODO
+bool contains(const std::vector<std::string> &list, const std::string &name)
 {
-  return false;
+  bool found = false;
+  for (int n = 0; n < list.size(); n++) {
+    if (list[n].compare(name) == 0) {
+      found = true;
+      break;
+    }
+  }
+  return found;
+}
+
+void addUniq(std::vector<std::string> &addList, const std::string &name)
+{
+  bool found = contains(addList, name);
+  if (!found) {
+    addList.push_back(name);
+  }
+}
+
+bool SB::addTolist(std::vector<Node> &fullList)
+{
+  bool ret = false;
+  int numAdd = 0;
+  // create a list of nodes to add
+printf("enter addTolist: %s %s (%d)\n", this->name.c_str(), this->list[0].label.c_str(), this->list.size());
+  std::vector<std::string> addList;
+  std::vector<std::string> inList;
+  for (int n = 0; n < this->list.size(); n++) {
+    inList.push_back(this->list[n].label);
+  }
+  for (int n = 0; n < this->list.size(); n++) {
+    if (this->list[n].label.compare(0, 5, "exit_") == 0) continue;
+    for (int m = 0; m < this->list[n].toList.size(); m++) {
+      if (!contains(inList, this->list[n].toList[m])) {
+        addUniq(addList, this->list[n].toList[m]);
+      }
+    }
+  }
+printf("add:");
+for (int n = 0; n < addList.size(); n++) {
+  printf(" %s", addList[n].c_str());
+}
+printf("\n");
+  // add the new nodes, if any are before top node flag
+  Node *np;
+  for (int n = 0; n < addList.size(); n++) {
+    np = findNode(fullList, addList[n]);
+    if (np->lineno < this->list[0].lineno) {
+      ret = false;
+      break;
+    }
+    if (addNode(*np)) numAdd++;
+  }
+  if (numAdd == 0) {
+    ret = false;
+  }
+  return ret;
 }
 
 void SB::addConstraint(const std::string s) // add unique strings
@@ -87,7 +169,7 @@ void SB::addConstraint(const std::string s) // add unique strings
   }
 }
 
-void SB::addNode(const Node &n) // add uniqe nodes
+bool SB::addNode(const Node &n) // add uniqe nodes
 {
   bool inList = false;
   for (int i = 0; i < this->list.size(); i++) {
@@ -102,19 +184,29 @@ void SB::addNode(const Node &n) // add uniqe nodes
       addConstraint(n.callList[i].substr(n.label.size()+1));
     }
   }
+  return !inList; // return true if added
 }
 
-void startSB(const std::string fn, const std::vector<Node> &fullList, const Node &n)
+void startSB(const std::string fn, std::vector<Node> &fullList, const Node &n)
 {
   SB sb(fn);
   sb.addNode(n);
-  if (n.numIn == 1) sbv.push_back(sb);
+  int lastNodeCount = sb.list.size();
+  if (n.numIn == 1 && n.numOut == 1) {
+printf("add SB for %s %d %d\n", fn.c_str(), sb.list[0].lineno, (int) sbv.size());
+    sbv.push_back(sb);
+  }
   bool done = false;
-  int level = 0;
   while (!done) {
-    done = sb.addTolist(fullList, level);
-    if (sb.isContained(fullList)) sbv.push_back(sb);
-    level++;
+    done = sb.addTolist(fullList);
+    if (lastNodeCount == sb.list.size()) {
+      done = true;
+    }
+    if (!done && sb.isContained()) {
+      sbv.push_back(sb);
+printf("add SB for %s %d %d\n", fn.c_str(), sb.list[0].lineno, (int) sbv.size());
+    }
+    lastNodeCount = sb.list.size();
   }
 }
 
@@ -126,19 +218,6 @@ void findSB(std::map<std::string, std::vector<Node> > &tree)
       startSB(it->first, it->second, *nit);
     }
   }
-}
-
-Node *findNode(std::vector<Node> &list, std::string &label)
-{
-  for (std::vector<Node>::iterator it = list.begin() ; it != list.end(); ++it) {
-    if (it->label.compare(label) == 0) {
-//printf("] found %s (%s) @ %p\n", it->label.c_str(), label.c_str(), it);
-      return &(*it);
-    }
-  }
-  Node *node = new Node(label);
-  list.push_back(*node);
-  return findNode(list, label); // go find the new entry, and return it
 }
 
 void pptree(std::map<std::string, std::vector<Node> > &tree)
