@@ -179,7 +179,7 @@ std::map<std::string, std::vector<Node> > parse(FILE *fd)
   while (fgets(buf, sizeof(buf), fd) != NULL) {
 //puts(buf);
     if (inSubgraph) {
-      if (strchr(buf, '>') > 0) {
+      if (strchr(buf, '>') != NULL) {
         if (sscanf(buf, "%s -> %[^[ ;]", from, to) == 2) {
           std::string flabel(from);
           std::string tlabel(to);
@@ -214,7 +214,7 @@ std::map<std::string, std::vector<Node> > parse(FILE *fd)
       inSubgraph = true;
 //printf("] enter subgraph %s\n", funcName.c_str());
       continue;
-    } else if (strchr(buf, '>') > 0) {
+    } else if (strchr(buf, '>') != NULL) {
       int n;
       rest[0] = 0;
 //printf("] %s", buf);
