@@ -11,7 +11,7 @@ bool debug;
 class Node {
   public:
   Node(std::string l) : label(l) { numIn = numOut = numCall = 0; size_t i = l.find_last_of('_'); lineno = atoi(l.substr(i+1).c_str());}
-  Node(Node *np) { lineno = np->lineno; numIn = np->numIn; numOut = np->numOut; numCall=np->numCall; label = np->label; toList = np->toList; callList = np->callList; }
+  Node(Node *np) { lineno = np->lineno; numIn = np->numIn; numOut = np->numOut; numCall=np->numCall; label = np->label; toList = np->toList; callList = np->callList; fprintf(stderr, "copy from ptr\n");}
   int lineno;
   int numIn;
   int numOut;
@@ -36,6 +36,54 @@ class SB {
 
 std::vector<SB> sbv;
 
+void ppsbv()
+{
+  for (int i = 0; i < sbv.size(); i++) {
+    printf("digraph G {\n");
+    printf("  compound=true;\n");
+    printf("  subgraph cluster_%s_%d {\n", sbv[i].name.c_str(), i);
+    printf("    label=\"%s_%d\";\n", sbv[i].name.c_str(), i);
+    std::string firstLabel = sbv[i].list[0].label;
+    for (int e = 0; e < sbv[i].list.size(); e++) {
+      for (int ne = 0; ne < sbv[i].list[e].toList.size(); ne++) {
+        printf("    %s -> %s;\n", sbv[i].list[e].label.c_str(), sbv[i].list[e].toList[ne].c_str());
+      }
+    }
+    printf("  }\n");
+    for (int c = 0; c < sbv[i].constraints.size(); c++) {
+      printf("  %s -> %s [ltail=cluster_%s_%d];\n", firstLabel.c_str(), sbv[i].constraints[c].c_str(), sbv[i].name.c_str(), i);
+    }
+    printf("}\n");
+  }
+}
+
+void pptree(std::map<std::string, std::vector<Node> > &tree)
+{
+  printf("digraph G {\n");
+  for (std::map<std::string, std::vector<Node> >::iterator it=tree.begin(); it!=tree.end(); ++it) {
+    printf("subgraph cluster_%s {\n", /* // len %d\n", */ (it->first).c_str() /* , (int) (it->second).size() */);
+    for (std::vector<Node>::iterator nit = (it->second).begin() ; nit != (it->second).end(); ++nit) {
+      //printf("// %s %d (in %d out %d)\n", nit->label.c_str(), (int) nit->toList.size(), nit->numIn, nit->numOut);
+      for (std::vector<std::string>::iterator lit = nit->toList.begin(); lit != nit->toList.end(); ++lit) {
+        printf("%s -> %s;\n", nit->label.c_str(), lit->c_str());
+      }
+    }
+    printf("}\n");
+  }
+  for (std::map<std::string, std::vector<Node> >::iterator it=tree.begin(); it!=tree.end(); ++it) {
+    for (std::vector<Node>::iterator nit = (it->second).begin() ; nit != (it->second).end(); ++nit) {
+      for (std::vector<std::string>::iterator lit = nit->callList.begin(); lit != nit->callList.end(); ++lit) {
+        bool lib = false;
+        if (nit->label.compare(0, nit->label.size(), *lit, 0, nit->label.size()) == 0) {
+          lib = true;
+        }
+        printf("%s -> %s%s;\n", nit->label.c_str(), lit->c_str(), lib?"[dir=both,minlen=0]":"");
+      }
+    }
+  }
+  printf("}\n");
+}
+
 void ppnode(Node *n)
 {
   printf("NODE-> %s (%d, %d)", n->label.c_str(), n->lineno, n->numIn);
@@ -57,10 +105,6 @@ Node *findNode(std::vector<Node> &list, std::string &label)
   Node *node = new Node(label);
   list.push_back(*node);
   return findNode(list, label); // go find the new entry, and return it
-}
-
-void ppsbv() // TODO
-{
 }
 
 bool listContainsLabel(const std::vector<std::string> list, const std::string label)
@@ -120,7 +164,7 @@ bool SB::addTolist(std::vector<Node> &fullList)
   bool ret = false;
   int numAdd = 0;
   // create a list of nodes to add
-printf("enter addTolist: %s %s (%d)\n", this->name.c_str(), this->list[0].label.c_str(), this->list.size());
+  //printf("enter addTolist: %s %s (%d)\n", this->name.c_str(), this->list[0].label.c_str(), this->list.size());
   std::vector<std::string> addList;
   std::vector<std::string> inList;
   for (int n = 0; n < this->list.size(); n++) {
@@ -134,23 +178,24 @@ printf("enter addTolist: %s %s (%d)\n", this->name.c_str(), this->list[0].label.
       }
     }
   }
-printf("add:");
-for (int n = 0; n < addList.size(); n++) {
-  printf(" %s", addList[n].c_str());
-}
-printf("\n");
+  //printf("add:"); for (int n = 0; n < addList.size(); n++) { printf(" %s", addList[n].c_str()); } printf("\n");
   // add the new nodes, if any are before top node flag
-  Node *np;
+  Node *np = NULL;
   for (int n = 0; n < addList.size(); n++) {
     np = findNode(fullList, addList[n]);
+fprintf(stderr, "%s: chk %s, %d <? %d\n", this->list[0].label.c_str(), np->label.c_str(), np->lineno, this->list[0].lineno);
     if (np->lineno < this->list[0].lineno) {
-      ret = false;
+fprintf(stderr, "\t\t%s: dont add %s, %d < %d\n", this->list[0].label.c_str(), np->label.c_str(), np->lineno, this->list[0].lineno);
+      ret = true;
       break;
     }
-    if (addNode(*np)) numAdd++;
+    if (!ret && addNode(*np)) {
+fprintf(stderr, "\t\tadding %s\n", np->label.c_str());
+      numAdd++;
+    }
   }
   if (numAdd == 0) {
-    ret = false;
+    ret = true;
   }
   return ret;
 }
@@ -179,9 +224,17 @@ bool SB::addNode(const Node &n) // add uniqe nodes
     }
   }
   if (!inList) {
+fprintf(stderr, "\t%s add %s\n", this->name.c_str(), n.label.c_str());
     this->list.push_back(n);
     for (int i = 0; i < n.callList.size(); i++) {
-      addConstraint(n.callList[i].substr(n.label.size()+1));
+      std::string name;
+      if (n.callList[i].compare(0, n.label.size(), n.label) == 0) {
+        name = n.callList[i].substr(n.label.size()+1);
+      } else {
+        name = n.callList[i];
+      }
+//printf("addNode:%s: constraint -> %s -> %s\n", n.label.c_str(), n.callList[i].c_str(), name.c_str());
+      addConstraint(name);
     }
   }
   return !inList; // return true if added
@@ -193,7 +246,7 @@ void startSB(const std::string fn, std::vector<Node> &fullList, const Node &n)
   sb.addNode(n);
   int lastNodeCount = sb.list.size();
   if (n.numIn == 1 && n.numOut == 1) {
-printf("add SB for %s %d %d\n", fn.c_str(), sb.list[0].lineno, (int) sbv.size());
+    //printf("add SB for %s %d %d\n", fn.c_str(), sb.list[0].lineno, (int) sbv.size());
     sbv.push_back(sb);
   }
   bool done = false;
@@ -204,7 +257,7 @@ printf("add SB for %s %d %d\n", fn.c_str(), sb.list[0].lineno, (int) sbv.size())
     }
     if (!done && sb.isContained()) {
       sbv.push_back(sb);
-printf("add SB for %s %d %d\n", fn.c_str(), sb.list[0].lineno, (int) sbv.size());
+      //printf("add SB for %s %d %d\n", fn.c_str(), sb.list[0].lineno, (int) sbv.size());
     }
     lastNodeCount = sb.list.size();
   }
@@ -218,33 +271,6 @@ void findSB(std::map<std::string, std::vector<Node> > &tree)
       startSB(it->first, it->second, *nit);
     }
   }
-}
-
-void pptree(std::map<std::string, std::vector<Node> > &tree)
-{
-  printf("digraph G {\n");
-  for (std::map<std::string, std::vector<Node> >::iterator it=tree.begin(); it!=tree.end(); ++it) {
-    printf("subgraph cluster_%s {\n", /* // len %d\n", */ (it->first).c_str() /* , (int) (it->second).size() */);
-    for (std::vector<Node>::iterator nit = (it->second).begin() ; nit != (it->second).end(); ++nit) {
-//printf("// %s %d (in %d out %d)\n", nit->label.c_str(), (int) nit->toList.size(), nit->numIn, nit->numOut);
-      for (std::vector<std::string>::iterator lit = nit->toList.begin(); lit != nit->toList.end(); ++lit) {
-        printf("%s -> %s;\n", nit->label.c_str(), lit->c_str());
-      }
-    }
-    printf("}\n");
-  }
-  for (std::map<std::string, std::vector<Node> >::iterator it=tree.begin(); it!=tree.end(); ++it) {
-    for (std::vector<Node>::iterator nit = (it->second).begin() ; nit != (it->second).end(); ++nit) {
-      for (std::vector<std::string>::iterator lit = nit->callList.begin(); lit != nit->callList.end(); ++lit) {
-        bool lib = false;
-        if (nit->label.compare(0, nit->label.size(), *lit, 0, nit->label.size()) == 0) {
-          lib = true;
-        }
-        printf("%s -> %s%s;\n", nit->label.c_str(), lit->c_str(), lib?"[dir=both,minlen=0]":"");
-      }
-    }
-  }
-  printf("}\n");
 }
 
 std::map<std::string, std::vector<Node> > parse(FILE *fd)
@@ -340,7 +366,6 @@ int main(int argc, char **argv)
   }
   std::map<std::string, std::vector<Node> > tree = parse(fd);
   fclose(fd);
-//printf("call pptree\n");
   pptree(tree);
   findSB(tree);
   ppsbv();
