@@ -18,6 +18,7 @@ class Node {
   int numCall;
   std::string label;
   std::vector<std::string> toList;
+  std::vector<std::string> fmList;
   std::vector<std::string> callList;
 };
 
@@ -121,6 +122,7 @@ bool listContainsLabel(const std::vector<std::string> list, const std::string la
 bool SB::isContained()
 {
   int numOutMiss = 0;
+  int numInMiss = 0;
   for (int ni = 0; ni < this->list.size(); ++ni) {
     for (int li = 0; li < this->list[ni].toList.size(); ++li) {
       std::string needle = this->list[ni].toList[li];
@@ -135,8 +137,22 @@ bool SB::isContained()
         numOutMiss++;
       }
     }
+    for (int li = 0; li < this->list[ni].fmList.size(); ++li) {
+      std::string needle = this->list[ni].fmList[li];
+      if (needle.compare(0, 6, "entry_") == 0) continue;
+      bool found = false;
+      for (int ni2 = 0; ni2 < this->list.size(); ++ni2) {
+        if (needle.compare(this->list[ni2].label) == 0) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        numInMiss++;
+      }
+    }
   }
-  if (numOutMiss < 2) {
+  if (numOutMiss < 2 && numInMiss < 2) {
     return true;
   }
   return false;
@@ -327,6 +343,7 @@ std::map<std::string, std::vector<Node> > parse(FILE *fd)
 //printf("] find node for to %s\n", tlabel.c_str());
           node = findNode(nodeList, tlabel);
           node->numIn++;
+          node->fmList.push_back(flabel);
         } else {
           fprintf(stderr, "SG parse error in : %s", buf);
         }
