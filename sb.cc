@@ -323,13 +323,15 @@ std::map<std::string, std::vector<Node> > parse(FILE *fd)
   std::vector<Node> nodeList;
   Node *node;
   bool inSubgraph = false;
-  char buf[256], from[128], to[128], rest[128], *p;
+  char buf[256], from[128], to[128], rest[128], *bp, *p;
   std::string funcName;
   while (fgets(buf, sizeof(buf), fd) != NULL) {
+  bp = buf;
+  while (bp && *bp && (*bp == ' ' || *bp == '	')) bp++;
 //puts(buf);
     if (inSubgraph) {
-      if (strchr(buf, '>') != NULL) {
-        if (sscanf(buf, "%s -> %[^[ ;]", from, to) == 2) {
+      if (strchr(bp, '>') != NULL) {
+        if (sscanf(bp, "%s -> %[^[ ;]", from, to) == 2) {
           std::string flabel(from);
           std::string tlabel(to);
 //printf("] find node for from %s\n", flabel.c_str());
@@ -348,7 +350,7 @@ std::map<std::string, std::vector<Node> > parse(FILE *fd)
           fprintf(stderr, "SG parse error in : %s", buf);
         }
         continue;
-      } else if (buf[0] == '}') {
+      } else if (*bp == '}') {
 //printf("] add nodeList (%d) to %s\n", (int) nodeList.size(), funcName.c_str());
         tree[funcName] = nodeList;
         nodeList.clear();
@@ -357,18 +359,18 @@ std::map<std::string, std::vector<Node> > parse(FILE *fd)
       } else {
         if (debug) printf("skipping: %s", buf);
       }
-    } else if (strncmp(buf, "subgraph cluster_", 17) == 0) { // subgraph cluster_GenerateKey { //}
-      p = strchr(&buf[17], ' '); // 
+    } else if (strncmp(bp, "subgraph cluster_", 17) == 0) { // subgraph cluster_GenerateKey { //}
+      p = strchr(&bp[17], ' '); // 
       *p = 0;
-      funcName.assign(&buf[17]);
+      funcName.assign(&bp[17]);
       inSubgraph = true;
 //printf("] enter subgraph %s\n", funcName.c_str());
       continue;
-    } else if (strchr(buf, '>') != NULL) {
+    } else if (strchr(bp, '>') != NULL) {
       int n;
       rest[0] = 0;
 //printf("] %s", buf);
-      if ((n = sscanf(buf, "%s -> %[^[ ;][%[^];]", from, to, rest)) > 1) {
+      if ((n = sscanf(bp, "%s -> %[^[ ;][%[^];]", from, to, rest)) > 1) {
         char fn[128];
         if (from[0] == 'L') {
           strcpy(fn, &from[2]);
