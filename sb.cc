@@ -88,6 +88,7 @@ void pptree(std::map<std::string, std::vector<Node> > &tree)
   printf("}\n");
 }
 
+// only used while debugging
 void ppnode(Node *n)
 {
   printf("NODE-> %s (%d, %d)", n->label.c_str(), n->lineno, n->numIn);
@@ -98,6 +99,7 @@ void ppnode(Node *n)
   printf("\n");
 }
 
+// this will always find the node, even if it has to push a new one
 Node *findNode(std::vector<Node> &list, std::string &label)
 {
   for (std::vector<Node>::iterator it = list.begin() ; it != list.end(); ++it) {
@@ -109,14 +111,6 @@ Node *findNode(std::vector<Node> &list, std::string &label)
   Node *node = new Node(label);
   list.push_back(*node);
   return findNode(list, label); // go find the new entry, and return it
-}
-
-bool listContainsLabel(const std::vector<std::string> list, const std::string label)
-{
-  for (int li = 0; li < list.size(); ++li) {
-    if (label.compare(list[li]) == 0) return true;
-  }
-  return false;
 }
 
 bool SB::isContained()
@@ -161,8 +155,8 @@ bool SB::isContained()
 bool contains(const std::vector<std::string> &list, const std::string &name)
 {
   bool found = false;
-  for (int n = 0; n < list.size(); n++) {
-    if (list[n].compare(name) == 0) {
+  for (int n = 0; n < list.size(); ++n) {
+    if (name.compare(list[n]) == 0) {
       found = true;
       break;
     }
@@ -202,14 +196,14 @@ bool SB::addTolist(std::vector<Node> &fullList)
   Node *np = NULL;
   for (int n = 0; n < addList.size(); n++) {
     np = findNode(fullList, addList[n]);
-fprintf(stderr, "%s: chk %s, %d <? %d\n", this->list[0].label.c_str(), np->label.c_str(), np->lineno, this->list[0].lineno);
+//fprintf(stderr, "%s: chk %s, %d <? %d\n", this->list[0].label.c_str(), np->label.c_str(), np->lineno, this->list[0].lineno);
     if (np->lineno < this->list[0].lineno) {
-fprintf(stderr, "\t\t%s: dont add %s, %d < %d\n", this->list[0].label.c_str(), np->label.c_str(), np->lineno, this->list[0].lineno);
+//fprintf(stderr, "\t\t%s: dont add %s, %d < %d\n", this->list[0].label.c_str(), np->label.c_str(), np->lineno, this->list[0].lineno);
       ret = true;
       break;
     }
     if (!ret && addNode(*np)) {
-fprintf(stderr, "\t\tadding %s\n", np->label.c_str());
+//fprintf(stderr, "\t\tadding %s\n", np->label.c_str());
       numAdd++;
     }
   }
@@ -243,7 +237,7 @@ bool SB::addNode(const Node &n) // add uniqe nodes
     }
   }
   if (!inList) {
-fprintf(stderr, "\t%s add %s\n", this->name.c_str(), n.label.c_str());
+//fprintf(stderr, "\t%s add %s\n", this->name.c_str(), n.label.c_str());
     this->list.push_back(n);
     for (int i = 0; i < n.callList.size(); i++) {
       std::string name;
@@ -259,6 +253,9 @@ fprintf(stderr, "\t%s add %s\n", this->name.c_str(), n.label.c_str());
   return !inList; // return true if added
 }
 
+// the one-out of the SB points to a node not in the SB
+// make a copy of the SB, rename the one-out destination to exit
+// return the new copy
 SB subEnd(SB &sb)
 {
   SB n(sb);
@@ -275,7 +272,7 @@ SB subEnd(SB &sb)
         }
       }
       if (!found) {
-fprintf(stderr, "change %s to exit\n", needle.c_str());
+//fprintf(stderr, "change %s to exit\n", needle.c_str());
         n.list[ni].toList[li] = "exit";
         return n;
       }
@@ -284,6 +281,7 @@ fprintf(stderr, "change %s to exit\n", needle.c_str());
   return n;
 }
 
+// start looking for SBs at node n
 void startSB(const std::string fn, std::vector<Node> &fullList, const Node &n)
 {
   SB sb(fn);
@@ -311,7 +309,7 @@ void findSB(std::map<std::string, std::vector<Node> > &tree)
 {
   for (std::map<std::string, std::vector<Node> >::iterator it=tree.begin(); it!=tree.end(); ++it) {
     for (std::vector<Node>::iterator nit = (it->second).begin() ; nit != (it->second).end(); ++nit) {
-      if (nit->numOut != 1) continue;
+      //if (nit->numOut != 1) continue;
       startSB(it->first, it->second, *nit);
     }
   }
