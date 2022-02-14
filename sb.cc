@@ -43,7 +43,10 @@ void ppsbv()
     printf("  compound=true;\n");
     printf("  subgraph cluster_%s_%d {\n", sbv[i].name.c_str(), i);
     printf("    label=\"%s_%d\";\n", sbv[i].name.c_str(), i);
+    printf("    entry [style=invis];\n");
+    printf("    exit [style=invis];\n");
     std::string firstLabel = sbv[i].list[0].label;
+    printf("    entry -> %s\n", firstLabel.c_str());
     for (int e = 0; e < sbv[i].list.size(); e++) {
       for (int ne = 0; ne < sbv[i].list[e].toList.size(); ne++) {
         printf("    %s -> %s;\n", sbv[i].list[e].label.c_str(), sbv[i].list[e].toList[ne].c_str());
@@ -240,6 +243,31 @@ fprintf(stderr, "\t%s add %s\n", this->name.c_str(), n.label.c_str());
   return !inList; // return true if added
 }
 
+SB subEnd(SB &sb)
+{
+  SB n(sb);
+  std::string firstLabel = n.list[0].label;
+  std::string *potMiss;
+  for (int ni = 0; ni < n.list.size(); ++ni) {
+    for (int li = 0; li < n.list[ni].toList.size(); ++li) {
+      std::string needle = n.list[ni].toList[li];
+      bool found = false;
+      for (int ni2 = 0; ni2 < n.list.size(); ++ni2) {
+        if (needle.compare(n.list[ni2].label) == 0) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+fprintf(stderr, "change %s to exit\n", needle.c_str());
+        n.list[ni].toList[li] = "exit";
+        return n;
+      }
+    }
+  }
+  return n;
+}
+
 void startSB(const std::string fn, std::vector<Node> &fullList, const Node &n)
 {
   SB sb(fn);
@@ -247,7 +275,7 @@ void startSB(const std::string fn, std::vector<Node> &fullList, const Node &n)
   int lastNodeCount = sb.list.size();
   if (n.numIn == 1 && n.numOut == 1) {
     //printf("add SB for %s %d %d\n", fn.c_str(), sb.list[0].lineno, (int) sbv.size());
-    sbv.push_back(sb);
+    sbv.push_back(subEnd(sb));
   }
   bool done = false;
   while (!done) {
@@ -256,7 +284,7 @@ void startSB(const std::string fn, std::vector<Node> &fullList, const Node &n)
       done = true;
     }
     if (!done && sb.isContained()) {
-      sbv.push_back(sb);
+      sbv.push_back(subEnd(sb));
       //printf("add SB for %s %d %d\n", fn.c_str(), sb.list[0].lineno, (int) sbv.size());
     }
     lastNodeCount = sb.list.size();
