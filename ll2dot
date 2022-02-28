@@ -1,0 +1,90 @@
+#!/bin/bash
+
+awk '
+function clean(lbl)
+{
+  sub("%", "", lbl);
+  sub(",", "", lbl);
+  return "L_" n "_" lbl;
+}
+BEGIN { print "digraph G {" }
+$1 == "define" {
+	for (i = 1; i <= NF; i++) {
+	  if ($i ~ /^@/) {
+	    f = i;
+	    break;
+	  }
+	}
+	n = substr($f,2);
+	sub("[(].*", "", n);
+	symtab[n] = 1
+	print "subgraph cluster_" n " {\n label=\"" n "\";";
+	cur="entry_" n;
+	print cur "[style=filled fillcolor=\"yellow\"];";
+}
+$1 == "br" {
+	if ($2 == "label") {
+		print cur " -> " clean($3) ";";
+	} else if ($2 == "i1") {
+		print cur " -> " clean($5) ";";
+		print cur " -> " clean($7) ";";
+	}
+}
+$1 == "call" || $3 == "call" {
+	for (i = 1; i <= NF; i++) {
+	  if ($i ~ /^@/) {
+	    f = i;
+	    break;
+	  }
+	}
+	sr = substr($f,2);
+	sub("[(].*", "", sr);
+	gsub(/\./, "_", sr);
+	if (sr in symtab) {
+	  #print cur " -> entry_" sr "[color=\"red\"];" > "/dev/stderr";
+	  #print "exit_" sr " -> " cur "[color=\"blue\"];" > "/dev/stderr";
+	  g = g cur " -> entry_" sr "[color=\"red\"];\nexit_" sr " -> " cur "[color=\"blue\"];\n"
+	} else {
+	  lsym = cur "_" sr
+          if (!(lsym in lsymtab)) {
+	    lsymtab[lsym] = 1
+	    #print lsym "[label=\"" sr "\"];" > "/dev/stderr";
+	    g = g lsym "[label=\"" sr "\"];\n"
+	  }
+	  #print cur " -> " lsym "[color=\"pink\",dir=both,minlen=0];" > "/dev/stderr";
+	  g = g cur " -> " lsym "[color=\"pink\",dir=both,minlen=0];\n"
+	  ##print lsym " -> " cur ";" > "/dev/stderr";
+	}
+}
+$1 ~ ":$" {
+	split($1, a, ":");
+	cur = "L_" n "_" a[1];
+}
+$1 == ";" && $2 ~ "label" {
+	split($2, a, ":");
+	cur = "L_" n "_" a[2];
+}
+$1 == "switch" {
+	for (i = 1; i <= NF; i++) {
+	  if ($i == "label") {
+	    f = i + 1;
+	    break;
+	  }
+	}
+	print cur " -> " clean($f) ";";
+	while ((getline) > 0) {
+	  if ($1 == "]") break;
+	  for (i = 1; i <= NF; i++) {
+	    if ($i == "label") {
+	      f = i + 1;
+	      break;
+	    }
+	  }
+	  print cur " -> " clean($f) ";";
+	}
+}
+$1 == "ret" {
+	print cur " -> exit_" n ";"
+}
+$1 == "}" { print $1 }
+END	{ print g "}" }' $*
