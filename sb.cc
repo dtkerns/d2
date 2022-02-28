@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include <string>
 #include <vector>
@@ -25,7 +26,7 @@ class Node {
 class SB {
   public:
   SB(const std::string &n) : name(n) { }
-  SB(const std::string &n, std::vector<Node> &l) : name(n), list(l) { }
+  SB(const std::string &n, const std::vector<Node> &l) : name(n), list(l) { }
   bool addNode(const Node &n);
   void addConstraint(const std::string s);
   bool addTolist(std::vector<Node> &fullList);
@@ -227,7 +228,7 @@ void SB::addConstraint(const std::string s) // add unique strings
   }
 }
 
-bool SB::addNode(const Node &n) // add uniqe nodes
+bool SB::addNode(const Node &n) // add unique nodes
 {
   bool inList = false;
   for (int i = 0; i < this->list.size(); i++) {
