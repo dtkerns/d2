@@ -242,12 +242,15 @@ bool SB::addNode(const Node &n) // add unique nodes
     this->list.push_back(n);
     for (int i = 0; i < n.callList.size(); i++) {
       std::string name;
-      if (n.callList[i].compare(0, n.label.size(), n.label) == 0) {
+//printf("%s (%c %d) =? %s (%d)\n", n.callList[i].c_str(), n.callList[i][n.label.size()], n.callList[i].size(), n.label.c_str(), n.label.size());
+      if (n.callList[i].compare(0, n.label.size(), n.label) == 0 && n.callList[i][n.label.size()] == '_' && n.callList[i].size() > n.label.size()) {
         name = n.callList[i].substr(n.label.size()+1);
+//printf("T %s\n", name.c_str());
       } else {
         name = n.callList[i];
+//printf("F %s\n", name.c_str());
       }
-//printf("addNode:%s: constraint -> %s -> %s\n", n.label.c_str(), n.callList[i].c_str(), name.c_str());
+//printf("addNode:%s: constraint -> %s -> |%s|\n", n.label.c_str(), n.callList[i].c_str(), name.c_str());
       addConstraint(name);
     }
   }
