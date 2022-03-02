@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <string>
 #include <vector>
@@ -38,27 +39,33 @@ class SB {
 
 std::vector<SB> sbv;
 
-void ppsbv()
+void ppsbv(int constr)
 {
   for (int i = 0; i < sbv.size(); i++) {
-    printf("digraph G {\n");
-    printf("  compound=true;\n");
-    printf("  subgraph cluster_%s_%d {\n", sbv[i].name.c_str(), i);
-    printf("    label=\"%s_%d\";\n", sbv[i].name.c_str(), i);
-    printf("    entry [style=invis];\n");
-    printf("    exit [style=invis];\n");
-    std::string firstLabel = sbv[i].list[0].label;
-    printf("    entry -> %s\n", firstLabel.c_str());
-    for (int e = 0; e < sbv[i].list.size(); e++) {
-      for (int ne = 0; ne < sbv[i].list[e].toList.size(); ne++) {
-        printf("    %s -> %s;\n", sbv[i].list[e].label.c_str(), sbv[i].list[e].toList[ne].c_str());
+    if (constr == 0) {
+      printf("digraph G {\n");
+      printf("  compound=true;\n");
+      printf("  subgraph cluster_%s_%d {\n", sbv[i].name.c_str(), i);
+      printf("    label=\"%s_%d\";\n", sbv[i].name.c_str(), i);
+      printf("    entry [style=invis];\n");
+      printf("    exit [style=invis];\n");
+      std::string firstLabel = sbv[i].list[0].label;
+      printf("    entry -> %s\n", firstLabel.c_str());
+      for (int e = 0; e < sbv[i].list.size(); e++) {
+        for (int ne = 0; ne < sbv[i].list[e].toList.size(); ne++) {
+          printf("    %s -> %s;\n", sbv[i].list[e].label.c_str(), sbv[i].list[e].toList[ne].c_str());
+        }
+      }
+      printf("  }\n");
+      for (int c = 0; c < sbv[i].constraints.size(); c++) {
+        printf("  %s -> %s [ltail=cluster_%s_%d];\n", firstLabel.c_str(), sbv[i].constraints[c].c_str(), sbv[i].name.c_str(), i);
+      }
+      printf("}\n");
+    } else {
+      for (int c = 0; c < sbv[i].constraints.size(); c++) {
+        printf("%s\n", /* firstLabel.c_str(), */ sbv[i].constraints[c].c_str());
       }
     }
-    printf("  }\n");
-    for (int c = 0; c < sbv[i].constraints.size(); c++) {
-      printf("  %s -> %s [ltail=cluster_%s_%d];\n", firstLabel.c_str(), sbv[i].constraints[c].c_str(), sbv[i].name.c_str(), i);
-    }
-    printf("}\n");
   }
 }
 
@@ -402,21 +409,47 @@ continue;
   return tree;
 }
 
+#define UFMT "usage: %s {[-c]|[-f filter]} file.dot\n"
+
 int main(int argc, char **argv)
 {
-  if (argc < 1) {
-    printf("usage: %s file.dot", argv[0]);
+  char *ffile = NULL;
+  int constr = 0;
+  int opt;
+  while ((opt = getopt(argc, argv, "cf:")) != -1) {
+    switch (opt) {
+    case 'c':
+      constr = 1;
+      break;
+    case 'f':
+      ffile = optarg;
+      break;
+    default: /* '?' */
+      fprintf(stderr, UFMT, argv[0]);
+      exit(EXIT_FAILURE);
+    }
+  }
+  //printf("optind %d argc %d ffile %s\n", optind, argc, ffile);
+  if (ffile != NULL && constr == 1) {
+    fprintf(stderr, "%s: can't specify both -c and -f\n", argv[0]);
+    optind = argc;
+  }
+  if (optind >= argc) {
+    fprintf(stderr, UFMT, argv[0]);
     return -1;
   }
-  FILE *fd = fopen(argv[1], "r");
+
+  FILE *fd = fopen(argv[optind], "r");
   if (fd == NULL) {
     printf("%s: failed to open %s for reading, errno %d\n", argv[0], argv[1], errno);
     return -2;
   }
   std::map<std::string, std::vector<Node> > tree = parse(fd);
   fclose(fd);
-  pptree(tree);
+  if (constr == 0) {
+    pptree(tree);
+  }
   findSB(tree);
-  ppsbv();
+  ppsbv(constr);
   return 0;
 }
