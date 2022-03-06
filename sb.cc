@@ -38,11 +38,36 @@ class SB {
 };
 
 std::vector<SB> sbv;
+std::vector<std::string> skiplist;
+
+bool contains(const std::vector<std::string> &list, const std::string &name)
+{
+  bool found = false;
+  for (int n = 0; n < list.size(); ++n) {
+    if (name.compare(list[n]) == 0) {
+      found = true;
+      break;
+    }
+  }
+  return found;
+}
 
 void ppsbv(int constr)
 {
   for (int i = 0; i < sbv.size(); i++) {
     if (constr == 0) {
+      if (skiplist.size()) {
+        bool skip = false;
+        for (int c = 0; c < sbv[i].constraints.size(); c++) {
+          if (contains(skiplist, sbv[i].constraints[c])) {
+            skip = true;
+            break;
+          }
+        }
+        if (skip) {
+          continue;
+        }
+      }
       printf("digraph G {\n");
       printf("  compound=true;\n");
       printf("  subgraph cluster_%s_%d {\n", sbv[i].name.c_str(), i);
@@ -158,18 +183,6 @@ bool SB::isContained()
     return true;
   }
   return false;
-}
-
-bool contains(const std::vector<std::string> &list, const std::string &name)
-{
-  bool found = false;
-  for (int n = 0; n < list.size(); ++n) {
-    if (name.compare(list[n]) == 0) {
-      found = true;
-      break;
-    }
-  }
-  return found;
 }
 
 void addUniq(std::vector<std::string> &addList, const std::string &name)
@@ -409,28 +422,50 @@ continue;
   return tree;
 }
 
-#define UFMT "usage: %s {[-c]|[-f filter]} file.dot\n"
+int readSkipList(char *ffile)
+{
+  FILE *sk = NULL;
+  char buf[1024];
+  sk = fopen(ffile, "r");
+  if (sk == NULL) {
+    return -1;
+  }
+  while (fgets(buf, sizeof(buf), sk) != NULL) {
+    char *p = strchr(buf, '\n');
+    if (p && *p == '\n') *p = 0;
+    if (p > buf) skiplist.push_back(buf);
+  }
+  fclose(sk);
+  return skiplist.size();
+}
+
+#define UFMT "usage: %s [-s] {[-c]|[-f filter]} file.dot\n"
 
 int main(int argc, char **argv)
 {
-  char *ffile = NULL;
   int constr = 0;
+  int showInput = 0;
+  int numSkip = 0;
   int opt;
-  while ((opt = getopt(argc, argv, "cf:")) != -1) {
+  while ((opt = getopt(argc, argv, "cf:s")) != -1) {
     switch (opt) {
     case 'c':
       constr = 1;
       break;
     case 'f':
-      ffile = optarg;
+      if ((numSkip = readSkipList(optarg)) < 0) {
+        printf("%s: failed to open %s for reading, errno %d\n", argv[0], optarg, errno);
+      }
+      break;
+    case 's':
+      showInput = 1;
       break;
     default: /* '?' */
       fprintf(stderr, UFMT, argv[0]);
       exit(EXIT_FAILURE);
     }
   }
-  //printf("optind %d argc %d ffile %s\n", optind, argc, ffile);
-  if (ffile != NULL && constr == 1) {
+  if (numSkip && constr == 1) {
     fprintf(stderr, "%s: can't specify both -c and -f\n", argv[0]);
     optind = argc;
   }
@@ -446,7 +481,7 @@ int main(int argc, char **argv)
   }
   std::map<std::string, std::vector<Node> > tree = parse(fd);
   fclose(fd);
-  if (constr == 0) {
+  if (showInput) {
     pptree(tree);
   }
   findSB(tree);
