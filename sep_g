@@ -1,0 +1,2 @@
+#!/bin/bash
+awk '/digraph/{close(f);f=sprintf("g%04d.dot",n++);}{print > f}' $*
