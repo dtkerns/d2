@@ -1,0 +1,71 @@
+#!/bin/bash
+
+awk '
+NR == 1 {
+	llfile = FILENAME;
+        sub("g$", "", llfile);
+}
+$1 == "define" {
+	for (i = 1; i <= NF; i++) {
+	  if ($i ~ /^@/) {
+	    f = i;
+	    break;
+	  }
+	}
+	nm = substr($f,2);
+	sub("[(].*", "", nm);
+	cur = "L_entry_" nm
+}
+$1 ~ ":$" {
+	split($1, a, ":");
+	cur = "L_" nm "_" a[1];
+}
+$1 == ";" && $2 ~ "label" {
+	split($2, a, ":");
+	cur = "L_" nm "_" a[2];
+}
+NF > 3 && $(NF-1) == "!dbg" {
+	#if ($NF in dbg) { print "dupe " $NF " -> " dbg[$NF], cur }
+	if (dbg[cur] !~ ($NF ",")) {
+	  dbg[cur] = dbg[cur] $NF ",";
+	  #print "add " $NF " to " cur, dbg[cur];
+	} else {
+	  #print $NF " already in " cur, dbg[cur]
+	}
+}
+$1 == "!1" && $2 == "=" {
+	cfilename = $4;
+	sub("\"", "", cfilename);
+	sub("\",", "", cfilename);
+}
+$1 ~ /^[!][0-9]+/ && $2 == "=" && /line:/ {
+	for (i = 3; i < NF; i++) {
+	  if ($i ~ /line:$/) {
+	    break;
+	  }
+	}
+	linnum = $(i+1);
+	sub(",", "", linnum);
+	line[$1] = linnum
+	#print "add " linnum " to |" $1 "|"
+}
+END	{
+	OFS=":";
+	for (bb in dbg) {
+	  printf("%s:%s:%s:", llfile, bb, cfilename);
+	  n = split(dbg[bb], a, ",")
+	  for (i = 1; i < n; i++) {
+	    if (a[i] in line) {
+	      pl = line[a[i]];
+	      if (!(pl in lol)) {
+	        printf("%s%s", i > 1 ? " " : "", pl);
+	        lol[pl] = 1;
+	      }
+	    } else {
+	      print "missing " a[i] " in line" > "/dev/stderr"
+	    }
+	  }
+	  printf("\n");
+	  delete lol
+	}
+}' $* | sort -t_ -k1 -k3 -k2 -k4 -n

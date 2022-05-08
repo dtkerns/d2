@@ -1,0 +1,52 @@
+#!/bin/bash
+
+awk -F: '
+BEGIN	{
+	f="atan atan2 cos log pow sin sqrt"
+	n = split(f,a," ");
+	for (i in a) {
+	  mf[a[i]] = 1;
+	}
+	OFS = ":";
+}
+# ./aes/aes.ll:AesDecrypt:L_AesDecrypt_2:1
+FILENAME ~ /loopdb/ {
+	BB = $1 SUBSEP $3;
+#print BB > "/tmp/loopdb"
+	loopcount[BB] = $4;
+	loopdb++;
+	next;
+}
+# ./activity/activity.ll:L_main_180:0006:0007:0011:0013:0014:0015
+FILENAME ~ /bbsbdb/ {
+	BB = $1 SUBSEP $2;
+#print BB > "/tmp/bbsbdb"
+	losb = $0;
+	sub($1 ":" $2 ":", "", losb);
+	gsub(":", ",", losb);
+	sb[BB] = losb;
+	bbsbdb++;
+	next;
+}
+# ./iradon/Recon2D/iradon/imgtools.ll:WriteTrace:22:L_WriteTrace_73:mul 4:fmul 2:udiv 0:sdiv 0:fdiv 0:urem 0:srem 0:frem 0:sqrt
+	{
+	bbdb++;
+	BB = $1 SUBSEP $4;
+#print BB > "/tmp/bbdb"
+        if (!(BB in loopcount)) next;
+	BBDB++;
+	MF = 0;
+	n = split($13, a, ",");
+	for (i in a) {
+	  if (a[i] in mf) MF++;
+	}
+	for (i = 5; i < 13; i++) {
+	  n = split($i, a, " ");
+          MF += a[2];
+        }
+	print $1,$4,loopcount[BB],MF,sb[BB];
+}
+END	{
+	#print loopdb, bbsbdb, bbdb, BBDB > "/tmp/counts"
+	# 3570:3249:7054:3712
+}' loopdb bbsbdb bbdb | sort -r -t: -n -k3 -k4

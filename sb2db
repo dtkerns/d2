@@ -1,0 +1,30 @@
+#!/bin/bash
+
+awk '
+function clean(s) {
+  sub(";", "", s);
+  return s;
+}
+FNR == 1 {
+	file = FILENAME;
+	sub(/.sb$/, ".ll", file);
+	n = split(file, a, "/");
+	sb = 0;
+}
+/digraph/ { sbs = sprintf("%04d",sb++); next }
+/->/	{
+	if ($3 == "exit;") next;
+	if ($1 != "entry") {
+          s = $1;
+          cs = clean(s);
+	  if (bb[file ":" cs] !~ (":" sbs))
+	    bb[file ":" cs] = bb[file ":" cs] ":" sbs
+	}
+	s = $3;
+        cs = clean(s);
+	if (bb[file ":" cs] !~ (":" sbs))
+	  bb[file ":" cs] = bb[file ":" cs] ":" sbs
+}
+END {
+  for (i in bb) print i bb[i]
+}' $* | sort -u

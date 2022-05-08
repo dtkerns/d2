@@ -1,0 +1,91 @@
+#!/bin/bash
+
+if [ 1 = 1 ]
+then
+  make -C .. clean
+  make -C .. ll=1
+  make -C .. ll=1 llg=1
+fi
+
+find . | grep '.ll$' | grep -v ./loll > loll
+find . | grep '.llg$' | grep -v ./lollg > lollg
+
+echo create ll2c db
+for i in $(cat lollg)
+do
+  echo "~/src/llg2cdb $i" >&2
+  ~/src/llg2cdb $i
+done > bbcdb
+
+echo create loop files
+for i in $(cat loll)
+do
+  echo "opt -analyze --loops $i > ${i%%ll}loop" >&2
+  opt -analyze --loops $i > ${i%%ll}loop
+done
+
+echo create dot files
+for i in $(cat loll)
+do
+  echo "~/src/ll2dot $i > ${i%%ll}dot" >&2
+  ~/src/ll2dot $i > ${i%%ll}dot
+done
+
+echo create sb files
+for i in $(cat loll)
+do
+  if [ ! -e ${i%%ll}const ]
+  then
+    echo "~/src/sb -c ${i%%ll}dot | sort -u > ${i%%ll}const" >&2
+    ~/src/sb -c ${i%%ll}dot | sort -u | grep -v '^sqrt$' > ${i%%ll}const
+    vim ${i%%ll}const
+  fi
+  echo "~/src/sb -f ${i%%ll}const ${i%%ll}dot > ${i%%ll}sb" >&2
+  ~/src/sb -f ${i%%ll}const ${i%%ll}dot > ${i%%ll}sb
+  d=$(echo ${i%ll}db.d)
+  f=$(filename ${i%%ll}sb)
+  rm -rf $d
+  mkdir $d
+  cd $d
+  ~/src/sep_g ../$f
+  cd -
+done
+
+echo create bbdb
+for i in $(cat loll)
+do
+  echo "~/src/ll2db $i" >&2
+  ~/src/ll2db $i
+done > bbdb
+
+echo create loopdb
+for i in $(cat loll)
+do
+  echo "~/src/loop2db ${i%%ll}loop" >&2
+  ~/src/loop2db ${i%%ll}loop
+done > loopdb
+
+echo create bbsbdb
+for i in $(cat loll)
+do
+  echo "~/src/sb2db ${i%%ll}sb" >&2
+  ~/src/sb2db ${i%%ll}sb
+done > bbsbdb
+
+ls -l bbcdb bbdb loopdb bbsbdb
+echo number bb $(cat bbdb | wc -l)
+echo number bb in loops $(cat loopdb | wc -l)
+echo rank SB
+~/src/filtbb > rankorder
+
+echo separate ll into bb files
+~/src/ll2bb $(cat loll)
+echo create signatures for each bb file
+for ll in $(cat loll)
+do
+  d=${ll%ll}bb/
+  for bb in $d/*
+  do
+    ~/src/bb2sig $bb > ${bb}.sig
+  done
+done

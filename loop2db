@@ -1,0 +1,35 @@
+#!/bin/bash
+
+awk '
+BEGIN {
+	sq = sprintf("%c", 39); # single quote
+	SUBSEP = ":"
+}
+NR == 1 {
+	f = FILENAME;
+}
+$1 == "Printing" && $4 == "Loop" {
+	split($0,a,sq);
+	fn = a[4];
+}
+$1 == "Loop" && $3 == "depth" {
+	depth = $4;
+	n = split($6,a,",");
+	for (i = 1; i <= n; i++) {
+	  ss = substr(a[i], 2); # drop leading %
+	  if (ss ~ /</) {
+	    sub("<.*", "", ss);
+	  }
+	  idx = "L_" fn "_" ss;
+	  if (db[fn,idx] < depth) {
+	    db[fn,idx] = depth;
+	  }
+	}
+}	
+END {
+	sub("loop$", "ll", f);
+	for (idx in db) {
+	  print f ":" idx ":" db[idx];
+	}
+}
+' $*

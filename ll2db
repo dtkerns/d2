@@ -1,0 +1,123 @@
+#!/bin/bash
+
+awk '
+function clean(lbl)
+{
+  sub("%", "", lbl);
+  sub(",", "", lbl);
+  return "L_" nm "_" lbl;
+}
+function pfuncstats(fn, a, bb, i)
+{
+  #split(listFunc, a, ",");
+  #for (fn in a) {
+    for (bb in bbList) {
+      if (bb !~ ("L_" fn "_")) continue;
+      printf("%s:%s:%d", FILENAME, fn, numBB[fn]);
+      printf(":%s", bb);
+      for (i = 1; i <= Nexops; i++) {
+        printf(":%s %d", exops[i], num[bb,exops[i]] + 0)
+      }
+      printf(":%s\n", substr(callList[bb],2));
+    }
+  #}
+}
+BEGIN {
+	split("ret br switch indirectbr invoke callbr resume catchswitch catchret cleanupret unreachable", a, " ");
+	for (i in a) terminators[a[i]] = i;
+	Nexops = split("mul fmul udiv sdiv fdiv urem srem frem", exops, " ");
+	for (i in exops) exbinops[exops[i]] = i;
+}
+# start of function
+$1 == "define" {
+	for (i = 1; i <= NF; i++) {
+	  if ($i ~ /^@/) {
+	    f = i;
+	    break;
+	  }
+	}
+	nm = substr($f,2); # function name
+	sub("[(].*", "", nm);
+	listFunc = listFunc "," nm
+	symtab[nm] = 1;
+	numBB[nm] = 1;
+}
+# start of BB
+$1 ~ ":$" {
+	split($1, a, ":");
+	cur = "L_" nm "_" a[1];
+	numBB[nm]++;
+	bbList[cur] = 1;
+}
+$1 == ";" && $2 ~ "label" {
+	split($2, a, ":");
+	cur = "L_" nm "_" a[2];
+	numBB[nm]++;
+	bbList[cur] = 1;
+}
+# expensive ops
+$2 == "=" && $3 ~ /mul|div|rem/ {
+	num[cur,$3]++;
+}
+$1 == "call" || $3 == "call" {
+	# %28 = call i32 @abs(i32 %27) #8
+	# call void @stbi__out_gif_code(%struct.stbi__gif* %222, i16 zeroext %224)
+	# call void %222(i8* %225, i8* %25, i32 1)
+	# %387 = call i8* %349(i8* %356, i8* %368, i8* %380, i32 %383, i32 %386)
+	# %73 = call i32 (%struct.stbi__write_context*, i32, i32, i32, i32, i32, i32, i8*, i32, i32, i8*, ...) @stbiw__outfile(%struct.stbi__write_context* %58, i32 -1, i32 -1, i32 %59, i32 %60, i32 %61, i32 0, i8* %62, i32 %63, i32 0, i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.str.136, i64 0, i64 0), i32 0, i32 0, i32 %64, i32 0, i32 0, i32 0, i32 0, i32 0, i32 %65, i32 %66, i32 %70, i32 %72)
+
+	sr = "FAILED_TO_FIND_SR"
+	for (i = 1; i <= NF; i++) {
+	  if ($i ~ /^@[^(]+[(].+/ ||
+	      $i ~ /^%[0-9]+[(].+/ ) {
+	    sr = $i;
+	    break;
+	  }
+	}
+	if (sr == "FAILED_TO_FIND_SR") {
+	  print NR, sr "\n" $0 > "/dev/stderr"
+	  exit
+	}
+	sub("[(].*", "", sr)
+	if (sr ~ /^%/) {
+	  sr = "FPDR_" substr(sr, 2)
+	} else {
+	  sr = substr(sr, 2)
+	}
+	# print "post % check", sr > "/dev/stderr"
+	gsub(/\./, "_", sr);
+	if (sr in symtab) {
+	  callList[cur] = callList[cur] "," sr
+	} else {
+	  lsym = cur "_" sr
+          if (!(lsym in lsymtab)) {
+	    lsymtab[lsym] = 1
+	  }
+	  callList[cur] = callList[cur] "," sr
+	}
+}
+
+# BB terminators: ret, br, switch, indirectbr, invoke, callbr, resume, catchswitch, catchret, cleanupret, unreachable
+$1 == "br" {
+	next;
+}
+$1 == "switch" {
+	while ((getline) > 0) {
+	  if ($1 == "]") break;
+	}
+	next;
+}
+$1 == "ret" {
+	next;
+}
+$1 == "unreachable" {
+        next;
+}
+$1 in terminators {
+	print "new terminator " $1 > "/dev/stderr"
+}
+# end of function
+$1 == "}" {
+	pfuncstats(nm);
+}
+' $*
