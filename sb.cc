@@ -75,7 +75,7 @@ void ppsbv(int constr)
       printf("    entry [style=invis];\n");
       printf("    exit [style=invis];\n");
       std::string firstLabel = sbv[i].list[0].label;
-      printf("    entry -> %s\n", firstLabel.c_str());
+      printf("    entry -> %s;\n", firstLabel.c_str());
       for (int e = 0; e < sbv[i].list.size(); e++) {
         for (int ne = 0; ne < sbv[i].list[e].toList.size(); ne++) {
           printf("    %s -> %s;\n", sbv[i].list[e].label.c_str(), sbv[i].list[e].toList[ne].c_str());
