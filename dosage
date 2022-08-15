@@ -1,91 +1,131 @@
 #!/bin/bash
 
-if [ 1 = 1 ]
+DOSAGE=$(dirname $(realpath $0))
+if [ $# -gt 0 ]
 then
-  make -C .. clean
-  make -C .. ll=1
-  make -C .. ll=1 llg=1
+  OD=$(realpath $1)
+else
+  OD=${TMPDIR-/tmp}/d$$
 fi
 
-find . | grep '.ll$' | grep -v ./loll > loll
-find . | grep '.llg$' | grep -v ./lollg > lollg
+echo $DOSAGE
+echo $OD
+mkdir -p $OD || exit
+
+if [ 1 = 0 ]
+then
+  time make clean
+  time make ll=1
+  time make ll=1 llg=1
+fi
+
+find . | grep '\.ll$' > $OD/loll
+find . | grep '\.llg$' > $OD/lollg
+
+sort $OD/loll $OD/lollg | cpio -pdum $OD
+cd $OD
 
 echo create ll2c db
-for i in $(cat lollg)
+time for i in $(cat $OD/lollg)
 do
-  echo "~/src/llg2cdb $i" >&2
-  ~/src/llg2cdb $i
-done > bbcdb
+  echo "llg2cdb $i" >&2
+  $DOSAGE/llg2cdb $i
+done > $OD/bbcdb
 
 echo create loop files
-for i in $(cat loll)
+time for i in $(cat $OD/loll)
 do
   echo "opt -analyze --loops $i > ${i%%ll}loop" >&2
   opt -analyze --loops $i > ${i%%ll}loop
 done
 
 echo create dot files
-for i in $(cat loll)
+time for i in $(cat $OD/loll)
 do
-  echo "~/src/ll2dot $i > ${i%%ll}dot" >&2
-  ~/src/ll2dot $i > ${i%%ll}dot
+  echo "ll2dot $i > ${i%%ll}dot" >&2
+  $DOSAGE/ll2dot $i > ${i%%ll}dot
 done
 
 echo create sb files
-for i in $(cat loll)
+pwd
+time for i in $(cat $OD/loll)
 do
   if [ ! -e ${i%%ll}const ]
   then
-    echo "~/src/sb -c ${i%%ll}dot | sort -u > ${i%%ll}const" >&2
-    ~/src/sb -c ${i%%ll}dot | sort -u | grep -v '^sqrt$' > ${i%%ll}const
+    echo "sb -c ${i%%ll}dot | sort -u > ${i%%ll}const" >&2
+    $DOSAGE/sb -c ${i%%ll}dot | sort -u | grep -v '^sqrt$' > ${i%%ll}const
     vim ${i%%ll}const
   fi
-  echo "~/src/sb -f ${i%%ll}const ${i%%ll}dot > ${i%%ll}sb" >&2
-  ~/src/sb -f ${i%%ll}const ${i%%ll}dot > ${i%%ll}sb
+  echo "sb -f ${i%%ll}const ${i%%ll}dot > ${i%%ll}sb" >&2
+  $DOSAGE/sb -f ${i%%ll}const ${i%%ll}dot > ${i%%ll}sb
   d=$(echo ${i%ll}db.d)
   f=$(filename ${i%%ll}sb)
   rm -rf $d
   mkdir $d
-  cd $d
-  ~/src/sep_g ../$f
-  cd -
+  (
+   cd $d
+  $DOSAGE/sep_g ../$f
+  )
 done
 
 echo create bbdb
-for i in $(cat loll)
+pwd
+time for i in $(cat $OD/loll)
 do
-  echo "~/src/ll2db $i" >&2
-  ~/src/ll2db $i
-done > bbdb
+  echo "ll2db $i" >&2
+  $DOSAGE/ll2db $i
+done > $OD/bbdb
 
 echo create loopdb
-for i in $(cat loll)
+time for i in $(cat $OD/loll)
 do
-  echo "~/src/loop2db ${i%%ll}loop" >&2
-  ~/src/loop2db ${i%%ll}loop
-done > loopdb
+  echo "loop2db ${i%%ll}loop" >&2
+  $DOSAGE/loop2db ${i%%ll}loop
+done > $OD/loopdb
 
 echo create bbsbdb
-for i in $(cat loll)
+time for i in $(cat $OD/loll)
 do
-  echo "~/src/sb2db ${i%%ll}sb" >&2
-  ~/src/sb2db ${i%%ll}sb
-done > bbsbdb
+  echo "sb2db ${i%%ll}sb" >&2
+  $DOSAGE/sb2db ${i%%ll}sb
+done > $OD/bbsbdb
 
-ls -l bbcdb bbdb loopdb bbsbdb
-echo number bb $(cat bbdb | wc -l)
-echo number bb in loops $(cat loopdb | wc -l)
+ls -l $OD/{bbcdb,bbdb,loopdb,bbsbdb}
+echo number bb $(cat $OD/bbdb | wc -l)
+echo number bb in loops $(cat $OD/loopdb | wc -l)
 echo rank SB
-~/src/filtbb > rankorder
+time $DOSAGE/filtbb $OD/loopdb $OD/bbsbdb $OD/bbdb > $OD/rankorder
 
 echo separate ll into bb files
-~/src/ll2bb $(cat loll)
-echo create signatures for each bb file
-for ll in $(cat loll)
+time $DOSAGE/ll2bb $(cat $OD/loll) > $OD/lobb
+#echo create signature file for each bb file
+
+echo create normalized file for each bb file
+time for bb in $(cat $OD/lobb)
 do
-  d=${ll%ll}bb/
-  for bb in $d/*
+  #awk -f $DOSAGE/bb2sig $bb > ${bb}.sig
+  $DOSAGE/bbnorm $bb > ${bb}.norm
+done
+echo rank order normalized files
+#awk -F: '$3 > 0 && $4 > 0 && $5 != "" { dir = $1; file = $2; sub(".ll$", ".bb", dir); print dir "/" file ".sig"; }' $OD/rankorder > $OD/rosigfiles
+time awk -F: '$3 > 0 && $4 > 0 && $5 != "" { dir = $1; file = $2; sub(".ll$", ".bb", dir); print dir "/" file ".norm"; }' $OD/rankorder > $OD/ronormfiles
+#$DOSAGE/bbselect $OD/rosigfiles > bbsel_sig
+echo bbselect
+time $DOSAGE/bbselect $OD/ronormfiles > $OD/bbsel_norm
+echo ID SB from BB
+time awk '{f=$1;n=split(f,a,"/");sub("bb/"a[n],"ll",f);sub(".norm$","",a[n]);print f":"a[n]}' $OD/bbsel_norm | uniq > $OD/bbsel_norm.bb
+fgrep -f $OD/bbsel_norm.bb $OD/rankorder > $OD/bbselected
+awk -F: '{b=$1;sub("ll$","db.d/",b);n=split($NF,a,",");for(i in a){x=b "g" a[i] ".dot";if(!(x in ol)){print x;ol[x]=1l;}}}' $OD/bbselected > $OD/sbselected
+echo colorize BB within SB CFG
+
+e1='/^\( *\)exit.*style=invis/a'
+e2='[color=red];'
+time for bb in $(cut -d: -f2 $OD/bbselected)
+do
+  for sb in $(grep -l $bb $(cat $OD/sbselected))
   do
-    ~/src/bb2sig $bb > ${bb}.sig
+    echo sed -i -e "$e1 $bb $e2" $sb
+    sed -i -e "$e1 $bb $e2" $sb
+    echo $sb >> $OD/sbmarkup
   done
 done
