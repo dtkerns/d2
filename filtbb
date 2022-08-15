@@ -44,9 +44,9 @@ FILENAME ~ /bbsbdb/ {
 	  n = split($i, a, " ");
           MF += a[2];
         }
-	print $1,$4,loopcount[BB],MF,sb[BB];
+	print $1,$4,loopcount[BB]+0,MF,sb[BB];
 }
 END	{
 	#print loopdb, bbsbdb, bbdb, BBDB > "/tmp/counts"
 	# 3570:3249:7054:3712
-}' loopdb bbsbdb bbdb | sort -r -t: -n -k3 -k4
+}' $* | sort -r -t: -n -k3 -k4
