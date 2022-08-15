@@ -23,20 +23,23 @@ $1 == "define" {
 	sub("[(].*", "", nm);
 	cur="entry_" nm;
 	EO = 1;
-	OF = pfix cur
+	OF = pfix cur;
+	print OF;
 }
 $1 ~ ":$" {
 	close(OF);
 	split($1, a, ":");
 	cur = "L_" nm "_" a[1];
 	EO = 1;
-	OF = pfix cur
+	OF = pfix cur;
+	print OF;
 }
 $1 == ";" && $2 ~ "label" {
 	split($2, a, ":");
 	cur = "L_" nm "_" a[2];
 	EO = 1;
-	OF = pfix cur
+	OF = pfix cur;
+	print OF;
 }
 $1 == "}" {
 	EO = 0;
