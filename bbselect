@@ -1,0 +1,24 @@
+#!/bin/bash
+
+awk '
+	{
+	f[NR] = $1
+}
+END	{
+	for (i = 1; i < NR; i++) {
+	  cmd = "wc -l < " f[i];
+	  cmd | getline wc[i];
+	  close(cmd);
+	  thresh[i] = int(wc[i] * .8)
+	  for (j = i+1; j <= NR; j++) {
+	    cmd = "comm -12 --nocheck-order --total " f[i] " " f[j] " | tail -1";
+	    cmd | getline v;
+	    close(cmd);
+	    n = split(v,a);
+	    if (n != 4) print "BAD RETURN: " v
+	    if (a[3] > thresh[i]) {
+	      print f[i] " " f[j] " " wc[i], a[1], a[2], a[3]
+	    }
+	  }
+	}
+}' $1

@@ -1,0 +1,64 @@
+#!/bin/bash
+
+awk '
+function getrep(ov, end, a) {
+#print "  enter getrep with " ov, "init ", init
+  #sub("%","",ov);
+  #if (ov ~ /[^0-9]$/) {
+    match(ov, "%([1-9][0-9]*)([^0-9]*)", a);
+    ov = a[1];
+    end = a[2];
+  #} else {
+  #  end = "";
+  #}
+  if (!(ov in map)) {
+    if (ov < init) {
+      ++ecount;
+      map[ov] = "E" ecount;
+    } else {
+      nv = ++count;
+      map[ov] = count;
+    }
+  }
+  frep[1] = "%" ov;
+  frep[2] = "%" map[ov]
+}
+#{ print NR ":", init,  $0 }
+FNR == 1 { mf = FILENAME ".map" }
+FNR == 1 && $1 == "define" && $0 ~ "%0" {
+	pass = 1
+}
+pass == 1 {
+	print;
+	next;
+}
+$1 ~ /[1-9][0-9]*:/ { 
+	rep = $0;
+	init = $1;
+	sub(":","",init);
+	sub($1, "1:", rep);
+        count = 1;
+	for (i = 2; i <= NF; i++) {
+	  if ($i ~ /^%[1-9][0-9]*/) {
+	    getrep($i);
+	    sub(frep[1], frep[2], rep);
+	  }
+	}
+	print rep;
+	next;
+}
+	{
+	rep = $0;
+	for (i = 1; i <= NF; i++) {
+	  if ($i ~ /^%[1-9][0-9]*/) {
+	    getrep($i);
+	    sub(frep[1], frep[2], rep);
+	  }
+	}
+	print rep;
+}
+END	{
+	system("> " mf);
+	for (i in map) print i, map[i] > mf;
+}
+' $1
