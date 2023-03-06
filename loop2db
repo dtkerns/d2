@@ -20,6 +20,7 @@ $1 == "Loop" && $3 == "depth" {
 	  if (ss ~ /</) {
 	    sub("<.*", "", ss);
 	  }
+          if (ss + 0 == 0) continue
 	  idx = "L_" fn "_" ss;
 	  if (db[fn,idx] < depth) {
 	    db[fn,idx] = depth;
