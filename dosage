@@ -54,12 +54,12 @@ do
   then
     echo "sb -c ${i%%ll}dot | sort -u > ${i%%ll}const" >&2
     $DOSAGE/sb -c ${i%%ll}dot | sort -u | grep -v '^sqrt$' > ${i%%ll}const
-    vim ${i%%ll}const
+    test -s ${i%%ll}const && vim ${i%%ll}const
   fi
   echo "sb -f ${i%%ll}const ${i%%ll}dot > ${i%%ll}sb" >&2
   $DOSAGE/sb -f ${i%%ll}const ${i%%ll}dot > ${i%%ll}sb
   d=$(echo ${i%ll}db.d)
-  f=$(filename ${i%%ll}sb)
+  f=$(basename ${i%%ll}sb)
   rm -rf $d
   mkdir $d
   (
