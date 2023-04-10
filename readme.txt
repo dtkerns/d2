@@ -9,7 +9,7 @@ also, second pass with a CFLAGS -g with the conditional
 ifeq ($(llg),1)
 to get a .llg file
 
-2) runnning the dosage script, passing the top of the tree
+2) runnning the d2 script, passing the top of the tree
   it calls make 2x first with ll=1 then a second time w/ llg=1
 
 it then generates 2 files that contain the list of .ll and .llg files
@@ -25,7 +25,7 @@ the BB's are named with numeric labels, and each line of the node is unique regi
 
 The .llg files are similar except that they have debugging information that points each BB to a set of lines in the original source code.
 
-dosage calls the script llg2cdb on each .llg file to create a .csv file used as a mapping from BB to the C source line at the end
+d2 calls the script llg2cdb on each .llg file to create a .csv file used as a mapping from BB to the C source line at the end
 
 3) for each .ll file, we call an llvm utility (opt) to calculate the number (nesting) of each BB in loops
 opt -analyze --loops
