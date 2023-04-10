@@ -13,7 +13,28 @@ bool debug;
 class Node {
   public:
   Node(std::string l) : label(l) { numIn = numOut = numCall = 0; size_t i = l.find_last_of('_'); lineno = atoi(l.substr(i+1).c_str());}
-  Node(Node *np) { lineno = np->lineno; numIn = np->numIn; numOut = np->numOut; numCall=np->numCall; label = np->label; toList = np->toList; callList = np->callList; fprintf(stderr, "copy from ptr\n");}
+  Node(const Node *np) {
+    lineno = np->lineno;
+    numIn = np->numIn;
+    numOut = np->numOut;
+    numCall = np->numCall;
+    label = np->label;
+    for (int i = 0; i < np->toList.size(); i++) toList.push_back(np->toList[i]);
+    for (int i = 0; i < np->fmList.size(); i++) fmList.push_back(np->fmList[i]);
+    for (int i = 0; i < np->callList.size(); i++) callList.push_back(np->callList[i]);
+   //fprintf(stderr, "copy from ptr\n");
+  }
+  Node(const Node &np) {
+    lineno = np.lineno;
+    numIn = np.numIn;
+    numOut = np.numOut;
+    numCall=np.numCall;
+    label = np.label;
+    for (int i = 0; i < np.toList.size(); i++) toList.push_back(np.toList[i]);
+    for (int i = 0; i < np.fmList.size(); i++) fmList.push_back(np.fmList[i]);
+    for (int i = 0; i < np.callList.size(); i++) callList.push_back(np.callList[i]);
+    //fprintf(stderr, "deep copy node\n");
+  }
   int lineno;
   int numIn;
   int numOut;
@@ -28,11 +49,15 @@ class SB {
   public:
   SB(const std::string &n) : name(n) { }
   SB(const std::string &n, const std::vector<Node> &l) : name(n), list(l) { }
+  SB(const SB &sb) : name(sb.name) { // deep copy constructor
+    for (int i=0; i < sb.list.size(); i++) list.push_back(sb.list[i]);
+    for (int i=0; i < sb.constraints.size(); i++) constraints.push_back(sb.constraints[i]);
+  }
   bool addNode(const Node &n);
   void addConstraint(const std::string s);
   bool addTolist(std::vector<Node> &fullList);
   bool isContained();
-  const std::string name;
+  std::string name;
   std::vector<Node> list; 
   std::vector<std::string> constraints; // external function calls
 };
@@ -280,11 +305,11 @@ bool SB::addNode(const Node &n) // add unique nodes
 // the one-out of the SB points to a node not in the SB
 // make a copy of the SB, rename the one-out destination to exit
 // return the new copy
-SB subEnd(SB &sb)
+const SB subEnd(SB &sb)
 {
   SB n(sb);
-  std::string firstLabel = n.list[0].label;
-  std::string *potMiss;
+  //std::string firstLabel = n.list[0].label;
+  //std::string *potMiss;
   for (int ni = 0; ni < n.list.size(); ++ni) {
     for (int li = 0; li < n.list[ni].toList.size(); ++li) {
       std::string needle = n.list[ni].toList[li];
