@@ -33,7 +33,7 @@ NF > 3 && $(NF-1) == "!dbg" {
 	  #print $NF " already in " cur, dbg[cur]
 	}
 }
-$1 == "!1" && $2 == "=" {
+cfilename == "" && $2 == "=" && $3 == "!DIFile(filename:" {
 	cfilename = $4;
 	sub("\"", "", cfilename);
 	sub("\",", "", cfilename);
