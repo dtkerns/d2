@@ -3,7 +3,7 @@
 DOSAGE=$(dirname $(realpath $0))
 if [ $# -gt 0 ]
 then
-  OD=$(realpath $1)
+  OD=$(realpath $1) # output dir
 else
   OD=${TMPDIR-/tmp}/d$$
 fi
@@ -29,7 +29,7 @@ echo create ll2c db
 time for i in $(cat $OD/lollg)
 do
   echo "llg2cdb $i" >&2
-  $DOSAGE/llg2cdb $i
+  $DOSAGE/llg2cdb.py $i | sort -t_ -k1 -k3 -k2 -k4 -n
 done > $OD/bbcdb
 
 echo create loop files
@@ -43,7 +43,7 @@ echo create dot files
 time for i in $(cat $OD/loll)
 do
   echo "ll2dot $i > ${i%%ll}dot" >&2
-  $DOSAGE/ll2dot $i > ${i%%ll}dot
+  $DOSAGE/ll2dot.py $i > ${i%%ll}dot
 done
 
 echo create sb files
@@ -64,7 +64,7 @@ do
   mkdir $d
   (
    cd $d
-  $DOSAGE/sep_g ../$f
+  $DOSAGE/sep_g.py ../$f
   )
 done
 
@@ -73,45 +73,45 @@ pwd
 time for i in $(cat $OD/loll)
 do
   echo "ll2db $i" >&2
-  $DOSAGE/ll2db $i
+  $DOSAGE/ll2db.py $i
 done > $OD/bbdb
 
 echo create loopdb
 time for i in $(cat $OD/loll)
 do
   echo "loop2db ${i%%ll}loop" >&2
-  $DOSAGE/loop2db ${i%%ll}loop
+  $DOSAGE/loop2db.py ${i%%ll}loop
 done > $OD/loopdb
 
 echo create bbsbdb
 time for i in $(cat $OD/loll)
 do
   echo "sb2db ${i%%ll}sb" >&2
-  $DOSAGE/sb2db ${i%%ll}sb
+  $DOSAGE/sb2db.py ${i%%ll}sb | sort -u
 done > $OD/bbsbdb
 
 ls -l $OD/{bbcdb,bbdb,loopdb,bbsbdb}
 echo number bb $(cat $OD/bbdb | wc -l)
 echo number bb in loops $(cat $OD/loopdb | wc -l)
 echo rank SB
-time $DOSAGE/filtbb $OD/loopdb $OD/bbsbdb $OD/bbdb > $OD/rankorder
+time $DOSAGE/filtbb.py $OD/loopdb $OD/bbsbdb $OD/bbdb | sort -r -t: -n -k3 -k4 > $OD/rankorder
 
 echo separate ll into bb files
-time $DOSAGE/ll2bb $(cat $OD/loll) > $OD/lobb
+time $DOSAGE/ll2bb.py $(cat $OD/loll) > $OD/lobb
 #echo create signature file for each bb file
 
 echo create normalized file for each bb file
 time for bb in $(cat $OD/lobb)
 do
   #awk -f $DOSAGE/bb2sig $bb > ${bb}.sig
-  $DOSAGE/bbnorm $bb > ${bb}.norm
+  $DOSAGE/bbnorm.py $bb > ${bb}.norm
 done
 echo rank order normalized files
 #awk -F: '$3 > 0 && $4 > 0 && $5 != "" { dir = $1; file = $2; sub(".ll$", ".bb", dir); print dir "/" file ".sig"; }' $OD/rankorder > $OD/rosigfiles
 time awk -F: '$3 > 0 && $4 > 0 && $5 != "" { dir = $1; file = $2; sub(".ll$", ".bb", dir); print dir "/" file ".norm"; }' $OD/rankorder > $OD/ronormfiles
 #$DOSAGE/bbselect $OD/rosigfiles > bbsel_sig
 echo bbselect
-time $DOSAGE/bbselect $OD/ronormfiles > $OD/bbsel_norm
+time $DOSAGE/bbselect.py $OD/ronormfiles > $OD/bbsel_norm
 echo ID SB from BB
 time awk '{f=$1;n=split(f,a,"/");sub("bb/"a[n],"ll",f);sub(".norm$","",a[n]);print f":"a[n]}' $OD/bbsel_norm | uniq > $OD/bbsel_norm.bb
 fgrep -f $OD/bbsel_norm.bb $OD/rankorder > $OD/bbselected
