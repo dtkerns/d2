@@ -4,6 +4,7 @@ def sepg(filename):
   with open(filename, "r") as f:
     data = f.read().splitlines()
   n = 0
+  of = None
   for d in data:
     if "digraph" in d:
       if of: of.close()
@@ -11,7 +12,7 @@ def sepg(filename):
       n += 1
       of = open(ofn, "w")
     print(d, file=of)
-  of.close()
+  if of: of.close()
   return 0
 if __name__ == "__main__":
   sepg(sys.argv[1])
