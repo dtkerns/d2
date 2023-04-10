@@ -17,6 +17,7 @@ def clean(lbl, nm):
 
 def pfuncstats(filename, fn, bbList, numBB, numEx, callList):
   global expops
+  //print("pfunc for %s bbLen %d" % (fn, len(bbList)), file=sys.stderr)
   for bb in bbList:
     if not bb.startswith("L_"+fn+"_"): continue
     os = "%s:%s:%d:%s" % (filename, fn, numBB[fn], bb)
@@ -38,6 +39,7 @@ def ll2db(filename):
   numEx = {}
   numBB = {}
   inSwitch = False
+  curBB = None
   for d in data:
     l += 1
     flds = d.lstrip().split(' ')
@@ -63,23 +65,36 @@ def ll2db(filename):
     if len(flds[0]) and flds[0][-1] == ":":
       BB = flds[0][:-1]
       curBB = "L_" + fnm + "_" + BB
+      #print("new BB %s -> %s" % (BB, curBB), file=sys.stderr)
       callList[curBB] = []
       numEx[curBB] = copy.deepcopy(Zexpops)
       numBB[fnm] += 1
-      if curBB not in bbList: bbList.append(curBB)
+      if curBB not in bbList:
+        bbList.append(curBB)
+        #print("1 add %s to bbList %d" % (curBB, len(bbList)), file=sys.stderr)
+      else:
+        #print("1 %s already in bbList %d" % (curBB, len(bbList)), file=sys.stderr)
+        pass
       inSwitch = False
-    if flds[0] == ";" and flds[1] == "label":
-      curBB = "L_" + fnm + "_" + flds[1][:-1]
+    if flds[0] == ";" and "label" in flds[1]:
+      curBB = "L_" + fnm + "_" + flds[1].split(':')[1]
+      #print("new %s -> %s" % (flds[1][:-1], curBB), file=sys.stderr)
       callList[curBB] = []
       numEx[curBB] = copy.deepcopy(Zexpops)
       numBB[fnm] += 1
-      if curBB not in bbList: bbList.append(curBB)
+      if curBB not in bbList:
+        bbList.append(curBB)
+        #print("2 add %s to bbList %d" % (curBB, len(bbList)), file=sys.stderr)
+      else:
+        #print("2 %s already in bbList %d" % (curBB, len(bbList)), file=sys.stderr)
+        pass
       inSwitch = False
     # expensive ops
     if len(flds) > 3 and flds[1] == "=" and flds[2] in expops:
       numEx[curBB][flds[2]] += 1
     # calls subroutine
     if len(flds) > 3 and "call" in flds:
+      if curBB == None: continue
       sr = None
       srf = flds.index("call")
       if flds[srf+1] == "fastcc": srf += 3
@@ -89,8 +104,15 @@ def ll2db(filename):
       elif flds[srf][0] == '@':
          sr = flds[srf][1:].split('(')[0]
       else:
-        print("%s:%d: FAILED TO FIND SR" % (filename, l), file=sys.stderr)
-        return -1
+        #print("search for @ from %d" % srf, file=sys.stderr)
+        for i in range(srf, len(flds)):
+          if flds[i][0] == '@':
+            sr = flds[i][1:].split('(')[0]
+            #print("found %s at %d" % (sr, i), file=sys.stderr)
+            break
+        if sr == None:
+          print("%s:%d: FAILED TO FIND SR: %s" % (filename, l, d), file=sys.stderr)
+          return -1
       sr = sr.replace(".", "_")
       if sr in symtab:
         callList[curBB].append(sr)
