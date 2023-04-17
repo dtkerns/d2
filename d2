@@ -1,6 +1,26 @@
 #!/bin/bash
 
 DOSAGE=$(dirname $(realpath $0))
+
+usage() {
+  echo "usage: $0 [-m] [output_dir]"
+  echo "    -m  don't run make to generate .ll/.llg files"
+  exit 1
+}
+
+domake=1
+TEMP=$(getopt -o 'hm' -- "$@")
+eval set -- "$TEMP"
+unset TEMP
+while true
+do
+  case "$1" in
+    '-h') usage ;;
+    '-m') domake=0; shift; continue ;;
+    '--') shift; break ;;
+  esac
+done
+
 if [ $# -gt 0 ]
 then
   OD=$(realpath $1) # output dir
@@ -12,7 +32,7 @@ echo $DOSAGE
 echo $OD
 mkdir -p $OD || exit
 
-if [ 1 = 0 ]
+if [ $domake = 1 ]
 then
   time make clean
   time make ll=1
