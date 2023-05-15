@@ -62,23 +62,23 @@ def ll2dot(filename):
       inSwitch = False
     # start of BB
     if len(flds[0]) and flds[0][-1] == ":":
-      BB = flds[0][:-1]
-      curBB = "L_" + fnm + "_" + BB
+      curBB = "L_" + fnm + "_" + flds[0][:-1]
       inSwitch = False
-    if flds[0] == ";" and flds[1] == "label":
-      curBB = "L_" + fnm + "_" + flds[1][:-1]
+    if flds[0] == ";" and "label" in flds[1]:
+      curBB = "L_" + fnm + "_" + flds[1].split(":")[-2]
       inSwitch = False
     # calls subroutine
     if len(flds) > 3 and "call" in flds:
       sr = None
       srf = flds.index("call")
-      if flds[srf+1] == "fastcc": srf += 3
-      else: srf += 2
-      if flds[srf][0] == '%':
-         sr = "FPDR_" + flds[srf][1:].split('(')[0]
-      elif flds[srf][0] == '@':
-         sr = flds[srf][1:].split('(')[0]
-      else:
+      for f in range(srf+1, len(flds)):
+        if flds[f][0] == '@':
+          sr = flds[f][1:].split('(')[0]
+          break
+        elif flds[f][0] == '%':
+          sr = "FPDR_" + flds[f][1:].split('(')[0]
+          break
+      if sr == None:
         print("%s:%d: FAILED TO FIND SR" % (filename, l), file=sys.stderr)
         return -1
       sr = sr.replace(".", "_")
