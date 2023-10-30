@@ -15,7 +15,7 @@ unset TEMP
 while true
 do
   case "$1" in
-    '-h') usage ;;
+    '-h'|'-?') usage ;;
     '-m') domake=0; shift; continue ;;
     '--') shift; break ;;
   esac
@@ -42,6 +42,7 @@ fi
 find . | grep '\.ll$' > $OD/loll
 find . | grep '\.llg$' > $OD/lollg
 
+echo copy files to $OD
 sort $OD/loll $OD/lollg | cpio -pdum $OD
 cd $OD
 
@@ -84,7 +85,7 @@ do
   mkdir $d
   (
    cd $d
-  $DOSAGE/sep_g.py ../$f
+   $DOSAGE/sep_g.py ../$f
   )
 done
 
