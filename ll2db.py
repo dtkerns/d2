@@ -17,7 +17,7 @@ def clean(lbl, nm):
 
 def pfuncstats(filename, fn, bbList, numBB, numEx, callList):
   global expops
-  //print("pfunc for %s bbLen %d" % (fn, len(bbList)), file=sys.stderr)
+  #print("pfunc for %s bbLen %d" % (fn, len(bbList)), file=sys.stderr)
   for bb in bbList:
     if not bb.startswith("L_"+fn+"_"): continue
     os = "%s:%s:%d:%s" % (filename, fn, numBB[fn], bb)
@@ -68,7 +68,11 @@ def ll2db(filename):
       #print("new BB %s -> %s" % (BB, curBB), file=sys.stderr)
       callList[curBB] = []
       numEx[curBB] = copy.deepcopy(Zexpops)
-      numBB[fnm] += 1
+      try:
+        numBB[fnm] += 1
+      except KeyError:
+        print("fnm (%s) not in numBB" % (fnm), file=sys.stderr)
+        return -1
       if curBB not in bbList:
         bbList.append(curBB)
         #print("1 add %s to bbList %d" % (curBB, len(bbList)), file=sys.stderr)
