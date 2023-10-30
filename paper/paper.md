@@ -6,13 +6,14 @@ tags:
  - resource-constrained systems
  - energy efficient
 authors:
-- David T Kerns
-  affiliation: 1
-  equal-contrib: true
-- Tosiron Adegbija
-  affiliation: 1
+ - name: David T Kerns
+   affiliation: 1
+   equal-contrib: true
+ - name: Tosiron Adegbija
+   affiliation: 1
 affiliations:
-- name: Department of Electrical \& Computer Engineering, University of Arizona, Tucson, Arizona, USA
+- name: Department of Electrical & Computer Engineering, University of Arizona, Tucson, Arizona, USA
+  index: 1
 date:
 bibliography: paper.bib
 ---
