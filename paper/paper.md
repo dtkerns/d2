@@ -1,80 +1,30 @@
-\documentclass[10pt, conference]{IEEEtran}
+---
+title: 'An Open-Source Tool for Generating Domain-Specific Accelerators for Energy-Efficient Computing'
+tags:
+ - Domain-specific accelerators
+ - computer-aided design
+ - resource-constrained systems
+ - energy efficient
+authors:
+- David T Kerns
+  affiliation: 1
+  equal-contrib: true
+- Tosiron Adegbija
+  affiliation: 1
+affiliations:
+- name: Department of Electrical \& Computer Engineering, University of Arizona, Tucson, Arizona, USA
+date:
+bibliography: paper.bib
+---
 
-%\IEEEoverridecommandlockouts
-% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
-
-\usepackage{cite}
-\usepackage{amsmath,amssymb,amsfonts}
-\usepackage{algorithmic}
-\usepackage{graphicx}
-\usepackage{textcomp}
-\usepackage{xcolor}
-\usepackage{comment}
-\usepackage{caption}
-\usepackage{subcaption} % dtk added this
-\usepackage{hyperref}
-\usepackage{booktabs}
-\usepackage{multirow}
-\usepackage{listings}
-\definecolor{codegreen}{rgb}{0,0.6,0}
-\definecolor{codegray}{rgb}{0.5,0.5,0.5}
-\definecolor{codepurple}{rgb}{0.58,0,0.82}
-\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
-
-\lstdefinestyle{mystyle}{
-    backgroundcolor=\color{backcolour},   
-    commentstyle=\color{codegreen},
-    keywordstyle=\color{magenta},
-    numberstyle=\tiny\color{codegray},
-    stringstyle=\color{codepurple},
-    basicstyle=\ttfamily\footnotesize,
-    breakatwhitespace=false,         
-    breaklines=true,                 
-    captionpos=b,                    
-    keepspaces=true,                 
-    numbers=left,                    
-    numbersep=5pt,                  
-    showspaces=false,                
-    showstringspaces=false,
-    showtabs=false,                  
-    tabsize=2
-}
-
-\lstset{style=mystyle}
-
-\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
-    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
-
-%\usepackage[caption=false, font=footnotesize]{subfig} % commented this
-%\newcommand{\centercell}[1]{\multicolumn{1}{c}{#1}}
-
-\begin{document}
-
-\IEEEoverridecommandlockouts
-\IEEEpubid{\makebox[\columnwidth]{978-1-6654-3922-0/21/\$31.00 $\copyright$2023 IEEE \hfill} \hspace{\columnsep}\makebox[\columnwidth]{ }}
-
-\title{An Open-Source Tool for Generating Domain-Specific Accelerators for Energy-Efficient Computing}
-
-\author{\IEEEauthorblockN{David T Kerns and Tosiron Adegbija}
-\IEEEauthorblockA{\textit{Department of Electrical \& Computer Engineering} \\
-\textit{University of Arizona}\\
-Tucson, Arizona, USA \\
-\{dtkerns,tosiron\}@arizona.edu}
-}
-
-\maketitle
-
-\begin{abstract}
+# Summary
 
 Previous work \cite{limaye21_dosage} introduced the Super Block (SB) as new granularity for Domain Specific Accelerators (DSAs). The SB provides a middle ground to the existing extreme granularities of creating DSAs only from Basic Blocks (BBs) or whole functions outright. This paper describes an Open Source Software (OSS) version, D2, of that previous work which will enable researchers and developers in the DSA community to easily experiment with this new granularity towards finding an optimal solution to the DSA definition at hand. Our results show that the SB should be taken seriously as a candidate for creating DSAs. A brief background is presented for readers new to the DSA arena.
 
-\end{abstract}
+# Statement of need
 
-\begin{IEEEkeywords}
-Domain-specific accelerators, computer-aided design, resource-constrained systems, energy efficient
-\end{IEEEkeywords}
 
-\section{Introduction}
+# Introduction
 In a post-Moore's Law computing environment where IoT and edge computing continue to expand,resource-constrained high-performance computing systems have become even more important. ASICs (Application-specific integrated circuits) continue to set the performance bar, but bring along a high development cost, long lead times, and inability to make corrections or changes once manufactured; not to mention a threshold production run to where it even makes sense economically. GPUs solve the problem by throwing more, but cheaper computing power at a task. This requires a typically large parallelization design effort but in the end, you are left with a result that is less than optimal from a power usage standpoint. When one of the goals is energy efficiency, GPUs fall short. Additionally, GPUs can be considered to be in the class of a general-purpose accelerator, which typically has a large area footprint and/or an underutilized compute resource that is prohibitive in a resource-constrained environment. Alternatively, a Domain Specific Accelerator (DSA) is an accelerator that is customized for common code blocks shared between multiple workloads. A key takeaway of the DSA is that it typically accelerates a smaller portion of the workload, but at higher utilization rates across workloads, resulting in higher performance of the overall system. While a DSA could be realized in an ASIC, we will assume for this paper that ASICs have already been ruled out due to earlier discussed issues. A DSA on an FPGA offers a good balance between the often conflicting requirements. The drawback to DSAs, and motivation for this work, is a higher effort in hardware/software co-design since the APIs must be tailored for each DSA. This paper introduces open-source automation tools that address this increased co-design effort.
 
 The need for DSAs, as opposed to general purpose architectures or ASICs, continues to be an attractive alternative because it offers a significant boost to performance without the expensive trade-offs and overhead that creating an ASIC or the size and power requirements of a higher performance general purpose CPU \cite{guo04_fpgaAdvantages}.
@@ -111,7 +61,7 @@ Previous work has used either a function level Canis et al. \cite{canis13_legup}
 
 This paper describes an open-source tool for identifying and generating DSAs given a set of input workloads. We describe how you can use the tool to identify good candidates for acceleration at the SB granularity in a resource-constrained target, no matter what domain your application lives in. While we use FPGAs for our case work, the concept of implementing a DSA from a SB from the original workloads, is something that transfers well to other DSA implementation technologies.
 
-\section{Related Work}
+ # Related Work
 \subsection{Domain-specific accelerators}
 FPGAs, however, do bring their own set of trade-offs to the table. Not unlike an ASIC, they usually require a designer that understands the constraints they operate under. However, FPGAs offer greater flexibility. It is in this vain that we then strive to measure the trade-offs in granularity size of the DSA. When the DSA attempts to capture too much, it becomes a burden on the FPGA designer as the complexity increases. On the other end of the spectrum, creating a DSA from a single BB can introduce too much overhead in the interface between the CPU and the accelerator for the amount of work done by the accelerator. The SB concept then provides a middle ground that may lead to an optimal acceleration solution. The D2 tool provides an exhaustive list of SBs which can be simulated to determine the optimal size.
 \subsection{Design automation of computer design}
@@ -129,7 +79,8 @@ This is a follow-on work of Limaye \cite{limaye21_dosage} except re-engineered f
     \caption{D2 Flow}
     \label{fig: d2flow}
 \end{figure*}
-\section{D2 Overview}
+
+# D2 Overview
 D2, as depicted in figure \ref{fig: d2flow}, is a tool that accepts a system's tree of source code. The user makes minor modifications to the makefiles to generate the required LLVM IR files. D2 then evaluates the IR files to create a set of meta data files. It then identifies and ranks BBs and SBs as candidates for FPGA acceleration to produce an optimal set of accelerators for the system. The identified source lines are then given to a synthesis tool, such as Xilinx Vivato HLS \cite{unspecified21_vivado_hls} to produce an FPGA accelerator that is integrated back into to the source code. The resulting system runs faster and more efficiently, perhaps to the point that makes the system viable on a resource-constrained target, which without the DSA would not be achievable.
 
 \subsection{Target system model}
@@ -173,8 +124,8 @@ Ranking is accomplished by keeping metrics on each BB. The depth of loop nesting
 \subsubsection{Back to the source}
 The original DOSAGE\cite{limaye21_dosage} version used LegUp \cite{canis13_legup} to produce the FPGA code from the LLVM's IR code. While that option is still viable and available, D2 also tracks the original C source files and lines of code that comprise each basic block. This allows us to go "back to the source" and use generic high-level synthesis tools like Xilinx Vivado \cite{unspecified21_vivado_hls} to produce the hardware description code (e.g., Verilog, SystemVerilog, VHDL) from the C source. This also makes modification of the original source to call the accelerator straightforward since the precise accelerated lines of code are known.
 
-\section{Case Studies}
-%The original DOSAGE paper used the HERMIT \cite{limay18_hermit} benchmark for its results. 
+# Case Studies
+The original DOSAGE paper used the HERMIT \cite{limay18_hermit} benchmark for its results. 
 To demonstrate the use of D2 and its ease of setup, we used the MiBench benchmark suite \cite{guthaus01_mibench} since it is well known and implements several algorithms that are popular in the embedded systems computing space. Using D2, we were able to identify multiple DSAs, six of which we will highlight here since they were ranked high by the D2 tool.
 However, implementing a DSA introduces an overhead. Depending on the interface that is used between the host and the DSA---CPU and FPGA, in our experiments---the overhead may be too large to overcome for small accelerators. The most straightforward implementation is to memory map the FPGA's input, output, and control registers into the global memory space of the CPU. This option also has the highest overhead to overcome. D2 has the promise of mitigating this overhead using the superblock granularity for generating DSAs. In our analysis for this paper, we modeled the simple memory-mapped register interface. While this approach suffices for demonstrating D2's utility, we note that even better results can be achieved with a higher-performing interface between the host and the DSA. %If you have at your disposal a higher performing DMA (Direct Memory Access) or other vendor specific interface, you can expect better results.
 For each of the DSAs below, we used the gem5 \cite{binkert11_gem5} simulator to calculate the cycle counts of both the original un-accelerated code, as well as the accelerated code with the simulated CPU/FPGA interface. The cycle counts of the actual DSA are from the Vivado simulation and have been added to the overhead column in the table. In all cases, overcoming the CPU/FPGA interface overhead is the deciding factor.
@@ -328,9 +279,8 @@ Our main intention has been to make the D2 tool available as open source to the 
 
 Typically, DSA optimizations are done after rigorous profiling is performed on an application or set of applications. Currently, D2 does not perform any of the standard profiling steps as its initial introduction is the identification of normalized Super Blocks. The intent of releasing this tool as open source is so that the community can collaboratively add these types of features that will make the tool more useful for everyone.
 
-\section{Acknowledgments}
+# Acknowledgments
 The authors would like to thank Kevin Gomez from the University of Arizona ECE lab and TBD from Rincon Research Corporation for their assistance in implementing some of the FPGA accelerators.
-\bibliographystyle{IEEEtran}
-\bibliography{IEEEabrv,refs}
 
-\end{document}
+# References
+
