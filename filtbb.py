@@ -14,7 +14,7 @@ def filtbb(filenames):
         for d in data:
           flds = d.split(':')
           BB = '_'.join([flds[0], flds[2]])
-          loopcount[BB] = flds[3]
+          loopcount[BB] = int(flds[3])
     if f2 and file.endswith('bbsbdb'):
       f2 = False
       with open(file, "r") as f:
