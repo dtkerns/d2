@@ -34,32 +34,13 @@ The need for DSAs, as opposed to general purpose architectures or ASICs, continu
 Designing DSAs raises new challenges. The need to analyze different workloads, identify similarities between them, generate accelerators, and then implement the accelerators into the current code base are all challenges that must be overcome and where an opportunity for automation exists. Few, if any, current design automation tools exist for this task.
 
 Previous work has used either a function level Canis et al. [@canis13_legup] (coarse) or a basic block (BB) Kumar et al. [@kumar17_needle], which is much finer; as the division point between the CPU and accelerator. A BB is a division, by the compiler, of the source code that has a single entry point and a single exit point. A BB can be comprised of a single statement (of the high-level language) or multiple statements depending on the generated instruction flow of the compiled code. While the BB granularity would seem like the best fit for identifying and generating DSAs, Limaye et al. [@limaye21_dosage] found that they were prohibitively overhead-prone due to the large number and small size of generated accelerators. Thus, they introduced a new granularity called the Super Block. A superblock (SB) is a collection of BBs, from a control flow graph (CFG) perspective, that also has a single entry point and a single exit point (see Fig \ref{fig:SB}). The one-in, one-out aspect is key to its implementation. SBs enable programs to be analyzed as easily as BBs, but offer more flexibility and better efficiency in generating DSAs.
- 
-\begin{figure}
-  \begin{subfigure}[b]{0.1\textwidth}
-    \centering
-    \includegraphics[scale=0.38]
-    {images/cfg.png}
-    \caption{A CFG}
-    \label{fig: A CFG}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[b]{0.2\textwidth}
-    \centering
-    \includegraphics[scale=0.38]{images/valid_SB.png}
-    \caption{Valid SBs}
-    \label{fig: Valid SB}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[b]{0.15\textwidth}
-    \centering
-    \includegraphics[scale=0.38]{images/invalid_sb.png}
-    \caption{Invalid}
-    \label{fig: Invalid SB}
-  \end{subfigure}
-  \caption{Super-block illustration: (a) Example CFG, (b) Valid super-blocks, (c) Invalid super-block}
-  \label{fig:SB}
-\end{figure}
+
+<div id:"fig:fig1">
+ ![A CFG](cfg.png){width=20%}
+ ![Valid SBs](valid_SB.png){width=20%}
+ ![Invalid SB](invalad_sb.png){width=20%}
+ Super-block illustration: (a) Example CFG, (b) Valid super-blocks, (c) Invalid super-block
+</div>
 
 This paper describes an open-source tool for identifying and generating DSAs given a set of input workloads. We describe how you can use the tool to identify good candidates for acceleration at the SB granularity in a resource-constrained target, no matter what domain your application lives in. While we use FPGAs for our case work, the concept of implementing a DSA from a SB from the original workloads, is something that transfers well to other DSA implementation technologies.
 
@@ -68,22 +49,16 @@ This paper describes an open-source tool for identifying and generating DSAs giv
 FPGAs, however, do bring their own set of trade-offs to the table. Not unlike an ASIC, they usually require a designer that understands the constraints they operate under. However, FPGAs offer greater flexibility. It is in this vain that we then strive to measure the trade-offs in granularity size of the DSA. When the DSA attempts to capture too much, it becomes a burden on the FPGA designer as the complexity increases. On the other end of the spectrum, creating a DSA from a single BB can introduce too much overhead in the interface between the CPU and the accelerator for the amount of work done by the accelerator. The SB concept then provides a middle ground that may lead to an optimal acceleration solution. The D2 tool provides an exhaustive list of SBs which can be simulated to determine the optimal size.
 ## Design automation of computer design
 This is a follow-on work of Limaye [@limaye21_dosage] except re-engineered from the ground up, with special emphasis on making it open source. Additionally, the novel parts are:
-\begin{itemize}
-  \item user controlled constraints,
-  \item normalization of BBs,
-  \item ranking at the BB level and then mapping the BB ranking onto SBs,
-  \item maintaining a link back to the source so that the accelerators can be generated directly from the source code rather than the LLVM IR files.
-\end{itemize}
-\begin{figure*}[ht]
-\centering
-    \includegraphics[width=.95\textwidth]
-    {images/d2_flow.png}
-    \caption{D2 Flow}
-    \label{fig: d2flow}
-\end{figure*}
+
+ - user controlled constraints
+ - normalization of BBs
+ - ranking at the BB level and then mapping the BB ranking onto SBs
+ - maintaining a link back to the source so that the accelerators can be generated directly from the source code rather than the LLVM IR files
+
+![D2 Flow]\label{fig:d2flow}](d2_flow.png)
 
 # D2 Overview
-D2, as depicted in figure \ref{fig: d2flow}, is a tool that accepts a system's tree of source code. The user makes minor modifications to the makefiles to generate the required LLVM IR files. D2 then evaluates the IR files to create a set of meta data files. It then identifies and ranks BBs and SBs as candidates for FPGA acceleration to produce an optimal set of accelerators for the system. The identified source lines are then given to a synthesis tool, such as Xilinx Vivato HLS [@unspecified21_vivado_hls] to produce an FPGA accelerator that is integrated back into to the source code. The resulting system runs faster and more efficiently, perhaps to the point that makes the system viable on a resource-constrained target, which without the DSA would not be achievable.
+D2, as depicted in figure \autoref{fig:d2flow}, is a tool that accepts a system's tree of source code. The user makes minor modifications to the makefiles to generate the required LLVM IR files. D2 then evaluates the IR files to create a set of meta data files. It then identifies and ranks BBs and SBs as candidates for FPGA acceleration to produce an optimal set of accelerators for the system. The identified source lines are then given to a synthesis tool, such as Xilinx Vivato HLS [@unspecified21_vivado_hls] to produce an FPGA accelerator that is integrated back into to the source code. The resulting system runs faster and more efficiently, perhaps to the point that makes the system viable on a resource-constrained target, which without the DSA would not be achievable.
 
 ## Target system model
 The target system model is assumed to be a resource-constrained computing system in which the generated DSA can be integrated. For example, this could be a CPU+FPGA system (used in our case studies), wherein the DSA is implemented on the FPGA, while the unaccelerated portions of the target workloads are run on the CPU. In this scenario, the FPGA should be addressable from the CPU such that the identified code that would normally be run by the CPU can be implemented on the FPGA and offloaded from the CPU without a significant bottleneck. This model is commonly found in resource-constrained computing devices where power constraints are a major concern. For example, human-implanted medical devices must be concerned with power and heat dissipation so that the surrounding tissues are not damaged [@karageorgos20_hwsw_bci].
@@ -105,6 +80,7 @@ The key to achieving maximum acceleration is to choose areas of the software tha
  
 ### Normalization of basic blocks
 D2 finds common accelerators through a process we call \textit{normalization}. The normalization process strips the code of all data, both variables and constants, and replaces them with named registers. This process is greatly simplified via LLVM's existing Static Single Assignment (SSA) [@ref22_llvmwebsiteabs] strategy which makes the identification of data and instruction flow straightforward. Figures \ref{fig: pre normalization} and \ref{fig: post normalization} show a `meld` [@willadsen23_meld] before and after normalization. Notice in the listings in Figure \ref{fig: post normalization} that the SSA's that are not defined locally are given an `%En` designation. Although these are not recognized by LLVM, they will never be seen by the compiler, but they do serve their purpose of identifying the data inputs to the DSA. What is left is a set of data inputs and outputs and a flow of instructions that operate on the data. Once a block is normalized, a simple (Linux) `diff` can identify BBs that perform the same set of instructions on a given set of data inputs. By simply changing the input data, an accelerator can be re-used and yield the appropriate results.
+
 \begin{figure*}[ht]
 \centering
     \includegraphics[width=.95\textwidth]
