@@ -36,9 +36,9 @@ Designing DSAs raises new challenges. The need to analyze different workloads, i
 Previous work has used either a function level Canis et al. [@canis13_legup] (coarse) or a basic block (BB) Kumar et al. [@kumar17_needle], which is much finer; as the division point between the CPU and accelerator. A BB is a division, by the compiler, of the source code that has a single entry point and a single exit point. A BB can be comprised of a single statement (of the high-level language) or multiple statements depending on the generated instruction flow of the compiled code. While the BB granularity would seem like the best fit for identifying and generating DSAs, Limaye et al. [@limaye21_dosage] found that they were prohibitively overhead-prone due to the large number and small size of generated accelerators. Thus, they introduced a new granularity called the Super Block. A superblock (SB) is a collection of BBs, from a control flow graph (CFG) perspective, that also has a single entry point and a single exit point (see Fig \ref{fig:SB}). The one-in, one-out aspect is key to its implementation. SBs enable programs to be analyzed as easily as BBs, but offer more flexibility and better efficiency in generating DSAs.
 
 <div id:"fig:fig1">
- ![A CFG](cfg.png){width=20%}
- ![Valid SBs](valid_SB.png){width=20%}
- ![Invalid SB](invalad_sb.png){width=20%}
+ ![(a) A CFG](cfg.png){width=20%}
+ ![(b) Valid SBs](valid_SB.png){width=20%}
+ ![(c) Invalid SB](invalad_sb.png){width=20%}
  Super-block illustration: (a) Example CFG, (b) Valid super-blocks, (c) Invalid super-block
 </div>
 
@@ -55,7 +55,7 @@ This is a follow-on work of Limaye [@limaye21_dosage] except re-engineered from 
  - ranking at the BB level and then mapping the BB ranking onto SBs
  - maintaining a link back to the source so that the accelerators can be generated directly from the source code rather than the LLVM IR files
 
-![D2 Flow]\label{fig:d2flow}](d2_flow.png)
+![D2 Flow](d2_flow.png){fig:d2flow width=90%}
 
 # D2 Overview
 D2, as depicted in figure \autoref{fig:d2flow}, is a tool that accepts a system's tree of source code. The user makes minor modifications to the makefiles to generate the required LLVM IR files. D2 then evaluates the IR files to create a set of meta data files. It then identifies and ranks BBs and SBs as candidates for FPGA acceleration to produce an optimal set of accelerators for the system. The identified source lines are then given to a synthesis tool, such as Xilinx Vivato HLS [@unspecified21_vivado_hls] to produce an FPGA accelerator that is integrated back into to the source code. The resulting system runs faster and more efficiently, perhaps to the point that makes the system viable on a resource-constrained target, which without the DSA would not be achievable.
@@ -79,21 +79,10 @@ The key to achieving maximum acceleration is to choose areas of the software tha
  One of the pieces of metadata that is captured in the CFG file is all functions that the BB calls. These are labeled as constraints; in that if the BB is to be realized by an accelerator, any function called by the BB must also be incorporated by the accelerator. Thus, a BB that calls I/O functions is not a candidate for acceleration. The other things that do not accelerate besides I/O are memory allocation and de-allocation. During the D2 processing of the source tree, the user is presented (for each BB) a list of constraints or functions called, if any, by the BB. The user should remove any functions that could be realized by an accelerator. (e.g. `sin(), cos(), sqrt()`) (Human in the loop) However, the lists are saved so that if the user re-runs D2 they do not have to go through the list of constraints again, but they are free to remove/modify the cached files to influence a subsequent run.
  
 ### Normalization of basic blocks
-D2 finds common accelerators through a process we call \textit{normalization}. The normalization process strips the code of all data, both variables and constants, and replaces them with named registers. This process is greatly simplified via LLVM's existing Static Single Assignment (SSA) [@ref22_llvmwebsiteabs] strategy which makes the identification of data and instruction flow straightforward. Figures \ref{fig: pre normalization} and \ref{fig: post normalization} show a `meld` [@willadsen23_meld] before and after normalization. Notice in the listings in Figure \ref{fig: post normalization} that the SSA's that are not defined locally are given an `%En` designation. Although these are not recognized by LLVM, they will never be seen by the compiler, but they do serve their purpose of identifying the data inputs to the DSA. What is left is a set of data inputs and outputs and a flow of instructions that operate on the data. Once a block is normalized, a simple (Linux) `diff` can identify BBs that perform the same set of instructions on a given set of data inputs. By simply changing the input data, an accelerator can be re-used and yield the appropriate results.
+D2 finds common accelerators through a process we call \textit{normalization}. The normalization process strips the code of all data, both variables and constants, and replaces them with named registers. This process is greatly simplified via LLVM's existing Static Single Assignment (SSA) [@ref22_llvmwebsiteabs] strategy which makes the identification of data and instruction flow straightforward. Figures [@fig:prenorm] and [@fig:postnorm] show a `meld` [@willadsen23_meld] before and after normalization. Notice in the listings in Figure [@fig:postnorm] that the SSA's that are not defined locally are given an `%En` designation. Although these are not recognized by LLVM, they will never be seen by the compiler, but they do serve their purpose of identifying the data inputs to the DSA. What is left is a set of data inputs and outputs and a flow of instructions that operate on the data. Once a block is normalized, a simple (Linux) `diff` can identify BBs that perform the same set of instructions on a given set of data inputs. By simply changing the input data, an accelerator can be re-used and yield the appropriate results.
 
-\begin{figure*}[ht]
-\centering
-    \includegraphics[width=.95\textwidth]
-    {images/before_norm.png}
-    \caption{A meld [@willadsen23_meld] before normalization of two different BBs}
-    \label{fig: pre normalization}
-\end{figure*}
-\begin{figure*}[ht]
-    \includegraphics[width=.95\textwidth]
-    {images/post_norm.png}
-    \caption{A meld after normalization of two different BBs (they are identical)}
-    \label{fig: post normalization}
-\end{figure*}
+![A meld before normalization of two different BBs](before_norm.png){#fig:prenorm}
+![A meld after normalization of two different BBs (they are identical)](post_norm.png){#fig:postnorm}
 
 ### Ranking and selection
 Ranking is accomplished by keeping metrics on each BB. The depth of loop nesting is the highest metric. Next is the count of expensive/complex instructions, which includes division, remainder, and multiplication. Finally, the number of high-priority BBs within an SB determine the SB's ranking. Often several SBs are subsets of a larger SB. While the largest SB often offers the best candidate for acceleration for a specific workload, a smaller SB that is common to multiple workloads may offer better overall acceleration to the entire system. The D2 package makes it easier for the developers to iterate through the many possibilities to find the optimal solution for the workloads at hand.
@@ -128,13 +117,12 @@ int acc1(int c1, int Q00, int c2, int Qs, int Al)
 }
 ```
 While the DSA is only used by a single workload, the normalization allowed us to re-use the DSA in four separate instances of the original code.
-Unfortunately, while the cycle count is significantly lower than the software version, the overhead of the register interface is too large to overcome. See figure \ref{fig:DSA 1}. If more efficient interface methods are available, more favorable numbers are obtainable.
-\begin{figure}[ht]
-\centering
-    \includegraphics[width=.2\textwidth]{images/dsa1_cmp.png}
-    \caption{DSA 1 comparison}
-    \label{fig:DSA 1}
-\end{figure}
+Unfortunately, while the cycle count is significantly lower than the software version, the overhead of the register interface is too large to overcome. See figure [@fig:DSA1]. If more efficient interface methods are available, more favorable numbers are obtainable.
+
+<div>
+  <img src="dsa1_cmp.png" width="200" /> 
+</div>
+![DSA 1 comparison](dsa1_cmp.png){#fig:DSA1 =200x}
 
 ## DSA 2
 The second DSA is an example of a very complex function. It is, in fact, a stand-alone function in the original source code, but was identified as an SB by the D2 software.
@@ -169,31 +157,23 @@ void SolveCubic(double  a,
   }
 }
 ```
-Notice that the function makes several math function calls; which implies that each of them is also implemented by Vivado HLS into the FPGA accelerator. These were controlled by the constraints input file during the D2 execution. The accelerator was able to a achieve a significant amount of parallelism. See figure \ref{fig:DSA 2}.
-\begin{figure}[ht]
-\centering
-    \includegraphics[width=.2\textwidth]{images/dsa2_cmp.png}
-    \caption{DSA 2 comparison}
-    \label{fig:DSA 2}
-\end{figure}
+Notice that the function makes several math function calls; which implies that each of them is also implemented by Vivado HLS into the FPGA accelerator. These were controlled by the constraints input file during the D2 execution. The accelerator was able to a achieve a significant amount of parallelism. See figure [@fig:DSA2].
+
+![DSA 2 comparison](dsa2_cmp.png){#fig:DSA2, width=2 }
 
 ## DSA 3
-The third DSA is an SB that was identified in multiple workloads. While it looks quite simple, it highlights the serialisation that occurs in a CPU with a limited number of FP multiply units. This highlights an aspect of D2 to find every possible SB and the power of normalization to identify where SBs are reused in multiple workloads. See figure \ref{fig:DSA 3}.
+The third DSA is an SB that was identified in multiple workloads. While it looks quite simple, it highlights the serialisation that occurs in a CPU with a limited number of FP multiply units. This highlights an aspect of D2 to find every possible SB and the power of normalization to identify where SBs are reused in multiple workloads. See figure [@fig:DSA3].
 ```c
 float acc3(float re, float im)
 {
   return (re * re + im * im) * 0.5;
 }
 ```
-\begin{figure}[ht]
-\centering
-    \includegraphics[width=.2\textwidth]{images/dsa3_cmp.png}
-    \caption{DSA 3 comparison}
-    \label{fig:DSA 3}
-\end{figure}
+
+![DSA 2 comparison](dsa3_cmp.png){#fig:DSA3 width=2 }
 
 ## DSA 4
-We expected this next one to do better. But on further inspection we discovered the ARM CPU has a sqrt assembly language instruction. This points to the importance of understanding your target hardware and that many things need to be considered whenever you embark on the acceleration journey. Contrast this DSA with the next one that in addition to the sqrt function, has other floating point operations. See figure \ref{fig:DSA 4}
+We expected this next one to do better. But on further inspection we discovered the ARM CPU has a sqrt assembly language instruction. This points to the importance of understanding your target hardware and that many things need to be considered whenever you embark on the acceleration journey. Contrast this DSA with the next one that in addition to the sqrt function, has other floating point operations. See figure [@fig:DSA4]
 ```c
 #include <math.h>
 
@@ -202,15 +182,11 @@ float acc4(float re, float im, float d)
   return sqrt(re*re+im*im)/d;
 }
 ```
-\begin{figure}[ht]
-\centering
-    \includegraphics[width=.2\textwidth]{images/dsa4_cmp.png}
-    \caption{DSA 4 comparison}
-    \label{fig:DSA 4}
-\end{figure}
+
+![DSA 4 comparison](dsa4_cmp.png){width=20% }
 
 ## DSA 5
-Again this DSA demonstrates that finding a granularity between a BB and full function can yield a DSA that can be used by multiple work loads and provide a significant performance boost to the overall computing task. See figure \ref{fig:DSA 5}
+Again this DSA demonstrates that finding a granularity between a BB and full function can yield a DSA that can be used by multiple work loads and provide a significant performance boost to the overall computing task. See figure [@fig:DSA5]
 ```c
 #include <math.h>
 
@@ -221,27 +197,19 @@ float acc5(float an, float bn, float re, float im, float d)
   return sqrt(re*re + im*im) / d;
 }
 ```
-\begin{figure}[ht]
-\centering
-    \includegraphics[width=.2\textwidth]{images/dsa5_cmp.png}
-    \caption{DSA 5 comparison}
-    \label{fig:DSA 5}
-\end{figure}
+
+![DSA 5 comparison](dsa5_cmp.png){#fig:DSA5 width=20% }
 
 ## DSA 6
-This DSA was not complex enough to overcome the the overhead of our memory mapped CPU/FPGA interface. See figure \ref{fig:DSA 6} It is a degenerate example of a SB that is, in fact, just a BB and demonstrates the need for the larger SB granularity.
+This DSA was not complex enough to overcome the the overhead of our memory mapped CPU/FPGA interface. See figure [@fig:DSA6]. It is a degenerate example of a SB that is, in fact, just a BB and demonstrates the need for the larger SB granularity.
 ```c
 float acc6(float a, float b, float c, float d)
 {
   return a * b * c / d;
 }
 ```
-\begin{figure}[ht]
-\centering
-    \includegraphics[width=.2\textwidth]{images/dsa6_cmp.png}
-    \caption{DSA 6 comparison}
-    \label{fig:DSA 6}
-\end{figure}
+
+![DSA 6 comparison](dsa6_cmp.png){#fig:DSA6 width=20% }
 
 # Conclusion and Future Work
 Our main intention has been to make the D2 tool available as open source to the DSA community, since the previous version of our lab's work was unavailable as OSS. We believe there is a future in right-sizing the DSA and that the D2 tool can provide valuable input to that end. Because there are very few OSS tools geared towards automation of DSA identification, our hope is that the D2 tool will be utilized and expanded upon within the DSA community to become a valuable resource and additionally, make the concept of the SB more accessible to the community as a whole. We feel there is merit in the SB granularity, and providing the tool as OSS will assist in the adoption of the SB.
@@ -252,4 +220,3 @@ Typically, DSA optimizations are done after rigorous profiling is performed on a
 The authors would like to thank Kevin Gomez from the University of Arizona ECE lab and TBD from Rincon Research Corporation for their assistance in implementing some of the FPGA accelerators.
 
 # References
-
