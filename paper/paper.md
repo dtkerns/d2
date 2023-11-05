@@ -24,7 +24,7 @@ Previous work [@limaye21_dosage] introduced the Super Block (SB) as new granular
 
 # Statement of need
 
-The DSA field currently offers few, if any, open source automation tools. The Super Block as a new DSA granularity offers real bennefit to the community. However, the DOSAGE software is not available. This ground-up re-write as open source from conception, hopes to bring the SB construct to the community at large.
+The DSA field currently offers few, if any, open source automation tools. The SB as a new DSA granularity offers real bennefit to the community. However, the DOSAGE software is not available. This ground-up re-write as open source from conception, hopes to bring the SB construct to the community at large.
 
 # Introduction
 In a post-Moore's Law computing environment where IoT and edge computing continue to expand,resource-constrained high-performance computing systems have become even more important. ASICs (Application-specific integrated circuits) continue to set the performance bar, but bring along a high development cost, long lead times, and inability to make corrections or changes once manufactured; not to mention a threshold production run to where it even makes sense economically. GPUs solve the problem by throwing more, but cheaper computing power at a task. This requires a typically large parallelization design effort but in the end, you are left with a result that is less than optimal from a power usage standpoint. When one of the goals is energy efficiency, GPUs fall short. Additionally, GPUs can be considered to be in the class of a general-purpose accelerator, which typically has a large area footprint and/or an underutilized compute resource that is prohibitive in a resource-constrained environment. Alternatively, a Domain Specific Accelerator (DSA) is an accelerator that is customized for common code blocks shared between multiple workloads. A key takeaway of the DSA is that it typically accelerates a smaller portion of the workload, but at higher utilization rates across workloads, resulting in higher performance of the overall system. While a DSA could be realized in an ASIC, we will assume for this paper that ASICs have already been ruled out due to earlier discussed issues. A DSA on an FPGA offers a good balance between the often conflicting requirements. The drawback to DSAs, and motivation for this work, is a higher effort in hardware/software co-design since the APIs must be tailored for each DSA. This paper introduces open-source automation tools that address this increased co-design effort.
@@ -119,9 +119,7 @@ int acc1(int c1, int Q00, int c2, int Qs, int Al)
 While the DSA is only used by a single workload, the normalization allowed us to re-use the DSA in four separate instances of the original code.
 Unfortunately, while the cycle count is significantly lower than the software version, the overhead of the register interface is too large to overcome. See figure [@fig:DSA1]. If more efficient interface methods are available, more favorable numbers are obtainable.
 
-<div>
-  <img src="dsa1_cmp.png" width="200" /> 
-</div>
+<div><img src="dsa1_cmp.png" width="200" /></div>
 ![DSA 1 comparison](dsa1_cmp.png){#fig:DSA1 =200x}
 
 ## DSA 2
@@ -159,7 +157,8 @@ void SolveCubic(double  a,
 ```
 Notice that the function makes several math function calls; which implies that each of them is also implemented by Vivado HLS into the FPGA accelerator. These were controlled by the constraints input file during the D2 execution. The accelerator was able to a achieve a significant amount of parallelism. See figure [@fig:DSA2].
 
-![DSA 2 comparison](dsa2_cmp.png){#fig:DSA2, width=2 }
+<div><img src="dsa2_cmp.png" width="200" /></div>
+![DSA 2 comparison](dsa2_cmp.png){#fig:DSA2 =200x }
 
 ## DSA 3
 The third DSA is an SB that was identified in multiple workloads. While it looks quite simple, it highlights the serialisation that occurs in a CPU with a limited number of FP multiply units. This highlights an aspect of D2 to find every possible SB and the power of normalization to identify where SBs are reused in multiple workloads. See figure [@fig:DSA3].
@@ -169,8 +168,8 @@ float acc3(float re, float im)
   return (re * re + im * im) * 0.5;
 }
 ```
-
-![DSA 2 comparison](dsa3_cmp.png){#fig:DSA3 width=2 }
+<div><img src="dsa3_cmp.png" width="200" /></div>
+![DSA 2 comparison](dsa3_cmp.png){#fig:DSA3 =200x }
 
 ## DSA 4
 We expected this next one to do better. But on further inspection we discovered the ARM CPU has a sqrt assembly language instruction. This points to the importance of understanding your target hardware and that many things need to be considered whenever you embark on the acceleration journey. Contrast this DSA with the next one that in addition to the sqrt function, has other floating point operations. See figure [@fig:DSA4]
@@ -183,6 +182,7 @@ float acc4(float re, float im, float d)
 }
 ```
 
+<div><img src="dsa4_cmp.png" width="200" /></div>
 ![DSA 4 comparison](dsa4_cmp.png){width=20% }
 
 ## DSA 5
@@ -198,7 +198,8 @@ float acc5(float an, float bn, float re, float im, float d)
 }
 ```
 
-![DSA 5 comparison](dsa5_cmp.png){#fig:DSA5 width=20% }
+<div><img src="dsa5_cmp.png" width="200" /></div>
+![DSA 5 comparison](dsa5_cmp.png){#fig:DSA5 =200x }
 
 ## DSA 6
 This DSA was not complex enough to overcome the the overhead of our memory mapped CPU/FPGA interface. See figure [@fig:DSA6]. It is a degenerate example of a SB that is, in fact, just a BB and demonstrates the need for the larger SB granularity.
@@ -209,7 +210,8 @@ float acc6(float a, float b, float c, float d)
 }
 ```
 
-![DSA 6 comparison](dsa6_cmp.png){#fig:DSA6 width=20% }
+<div><img src="dsa6_cmp.png" width="200" /></div>
+![DSA 6 comparison](dsa6_cmp.png){#fig:DSA6 =200x }
 
 # Conclusion and Future Work
 Our main intention has been to make the D2 tool available as open source to the DSA community, since the previous version of our lab's work was unavailable as OSS. We believe there is a future in right-sizing the DSA and that the D2 tool can provide valuable input to that end. Because there are very few OSS tools geared towards automation of DSA identification, our hope is that the D2 tool will be utilized and expanded upon within the DSA community to become a valuable resource and additionally, make the concept of the SB more accessible to the community as a whole. We feel there is merit in the SB granularity, and providing the tool as OSS will assist in the adoption of the SB.
