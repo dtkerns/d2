@@ -23,9 +23,9 @@ Previous work [@limaye21_dosage] introduced the Super Block (SB) as new granular
 
 # Statement of need
 
-The DSA field currently offers few, if any, open source automation tools. The SB as a new DSA granularity offers real bennefit to the community. However, the DOSAGE software is not available. This ground-up re-write as open source from conception, hopes to bring the SB construct to the community at large.
+The DSA field currently offers few, if any, open-source automation tools. An important challenge in the design of DSAs is identifying what portions of a set of domain programs should be implemented in hardware (i.e., accelerated) to maximize the performance and energy benefits of the DSA. The SB as a new DSA granularity offers real benefits for efficiently addressing this challenge. However, manually identifying these SBs can be prohibitively time-consuming and error-prone. This ground-up re-write as open source from conception hopes to bring the SB construct to the community at large.
 
-# Introduction
+# Motivation for this work
 In a post-Moore's Law computing environment where IoT and edge computing continue to expand,resource-constrained high-performance computing systems have become even more important. ASICs (Application-specific integrated circuits) continue to set the performance bar, but bring along a high development cost, long lead times, and inability to make corrections or changes once manufactured; not to mention a threshold production run to where it even makes sense economically. GPUs solve the problem by throwing more, but cheaper computing power at a task. This requires a typically large parallelization design effort but in the end, you are left with a result that is less than optimal from a power usage standpoint. When one of the goals is energy efficiency, GPUs fall short. Additionally, GPUs can be considered to be in the class of a general-purpose accelerator, which typically has a large area footprint and/or an underutilized compute resource that is prohibitive in a resource-constrained environment. Alternatively, a Domain Specific Accelerator (DSA) is an accelerator that is customized for common code blocks shared between multiple workloads. A key takeaway of the DSA is that it typically accelerates a smaller portion of the workload, but at higher utilization rates across workloads, resulting in higher performance of the overall system. While a DSA could be realized in an ASIC, we will assume for this paper that ASICs have already been ruled out due to earlier discussed issues. A DSA on an FPGA offers a good balance between the often conflicting requirements. The drawback to DSAs, and motivation for this work, is a higher effort in hardware/software co-design since the APIs must be tailored for each DSA. This paper introduces open-source automation tools that address this increased co-design effort.
 
 The need for DSAs, as opposed to general purpose architectures or ASICs, continues to be an attractive alternative because it offers a significant boost to performance without the expensive trade-offs and overhead that creating an ASIC or the size and power requirements of a higher performance general purpose CPU [@guo04_fpgaAdvantages].
@@ -34,7 +34,7 @@ Designing DSAs raises new challenges. The need to analyze different workloads, i
 
 Previous work has used either a function level [@canis13_legup] (coarse) or a basic block (BB) [@kumar17_needle], which is much finer; as the division point between the CPU and accelerator. A BB is a division, by the compiler, of the source code that has a single entry point and a single exit point. A BB can be comprised of a single statement (of the high-level language) or multiple statements depending on the generated instruction flow of the compiled code. While the BB granularity would seem like the best fit for identifying and generating DSAs, [@limaye21_dosage] found that they were prohibitively overhead-prone due to the large number and small size of generated accelerators. Thus, they introduced a new granularity called the Super Block. A superblock (SB) is a collection of BBs, from a control flow graph (CFG) perspective, that also has a single entry point and a single exit point 
 
-The following inlustrates the valid SB boundaries. The one-in, one-out aspect is key to its implementation. SBs enable programs to be analyzed as easily as BBs, but offer more flexibility and better efficiency in generating DSAs.
+The following illustrates the valid SB boundaries. The one-in, one-out aspect is key to its implementation. SBs enable programs to be analyzed as easily as BBs, but offer more flexibility and better efficiency in generating DSAs.
 
  ![(a) A CFG\label{fig:1a}](cfg.png)
  ![(b) Valid SBs\label{fig1b}](valid_SB.png)
@@ -50,7 +50,7 @@ FPGAs, however, do bring their own set of trade-offs to the table. Not unlike an
 ## Design automation of computer design
 This is a follow-on work of [@limaye21_dosage] except re-engineered from the ground up, with special emphasis on making it open source. Additionally, the novel parts are:
 
- - user controlled constraints
+ - user-controlled constraints
  - normalization of BBs
  - ranking at the BB level and then mapping the BB ranking onto SBs
  - maintaining a link back to the source so that the accelerators can be generated directly from the source code rather than the LLVM IR files
