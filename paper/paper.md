@@ -91,10 +91,9 @@ Ranking is accomplished by keeping metrics on each BB. The depth of loop nesting
 The original DOSAGE [@limaye21_dosage] version used LegUp [@canis13_legup] to produce the FPGA code from the LLVM's IR code. While that option is still viable and available, D2 also tracks the original C source files and lines of code that comprise each basic block. This allows us to go "back to the source" and use generic high-level synthesis tools like Xilinx Vivado [@unspecified21_vivado_hls] to produce the hardware description code (e.g., Verilog, SystemVerilog, VHDL) from the C source. This also makes modification of the original source to call the accelerator straightforward since the precise accelerated lines of code are known.
 
 # Case Studies
-The original DOSAGE paper used the HERMIT [@limay18_hermit] benchmark for its results. 
 To demonstrate the use of D2 and its ease of setup, we used the MiBench benchmark suite [@guthaus01_mibench] since it is well known and implements several algorithms that are popular in the embedded systems computing space. Using D2, we were able to identify multiple DSAs, six of which we will highlight here since they were ranked high by the D2 tool.
 However, implementing a DSA introduces an overhead. Depending on the interface that is used between the host and the DSA---CPU and FPGA, in our experiments---the overhead may be too large to overcome for small accelerators. The most straightforward implementation is to memory map the FPGA's input, output, and control registers into the global memory space of the CPU. This option also has the highest overhead to overcome. D2 has the promise of mitigating this overhead using the superblock granularity for generating DSAs. In our analysis for this paper, we modeled the simple memory-mapped register interface. While this approach suffices for demonstrating D2's utility, we note that even better results can be achieved with a higher-performing interface between the host and the DSA. If you have at your disposal a higher performing DMA (Direct Memory Access) or other vendor specific interface, you can expect better results.
-For each of the DSAs below, we used the gem5 [@binkert11_gem5] simulator to calculate the cycle counts of both the original un-accelerated code, as well as the accelerated code with the simulated CPU/FPGA interface. The cycle counts of the actual DSA are from the Vivado simulation and have been added to the overhead column in the table. In all cases, overcoming the CPU/FPGA interface overhead is the deciding factor.
+For each of the DSAs below, we used the gem5 [@binkert11_gem5] simulator to calculate the cycle counts of both the original un-accelerated code, as well as the accelerated code with the simulated CPU/FPGA interface. The cycle counts of the actual DSA are from the Vivado simulation with a 1MHz clock; since the ARM CPU clock runs at 1GHz, we multiplied the accelerator cycle times by 1000 to have a common 1GHz clock. We then added the overhead of calling the the accelerator to the accelerator column in each of the tables below. In all cases, overcoming the CPU/FPGA interface overhead is the deciding factor.
 
 ## DSA 1
 The first DSA we will look at was normalized from 4 different SBs. Via the normalization process, as detailed above, we were able to create a DSA that accepted arguments (data) that were passed into the DSA some of which were constants in the original code; in this instance, c1 and c2.
@@ -116,13 +115,13 @@ int acc1(int c1, int Q00, int c2, int Qs, int Al)
   return pred;
 }
 ```
-While the DSA is only used by a single workload, the normalization allowed us to re-use the DSA in four separate instances of the original code.
-Unfortunately, while the cycle count is significantly lower than the software version, the overhead of the register interface is too large to overcome. See \autoref{fig:DSA1}. If more efficient interface methods are available, more favorable numbers are obtainable.
+While the DSA is only used by a single workload, the normalization allowed us to re-use the DSA in four separate instances of the original code. Additional arguments were passed into the accelerator to accomdate the normalization. Unfortunately, while the cycle count is significantly lower than the software version, the overhead of the register interface is too large to overcome. In \autoref{fig:DSA1} we can see that the overhead of passing the arguments to the accelerrator, and then fetching the reusults cost as much or more than doing the calculation on the CPU. If more efficient interface methods are available, more favorable numbers are obtainable.
 
-![DSA 1 comparison\label{fig:DSA1}](dsa1_cmp.png){ width=35% }
+![DSA 1 comparison\label{fig:DSA1}](DSA1.png)
 
 ## DSA 2
 The second DSA is an example of a very complex function. It is, in fact, a stand-alone function in the original source code, but was identified as an SB by the D2 software.
+The Vivado tool provided proprietary implementations of the math functions that are free to use on Xilinx FPGAs.
 ```c
 #include <math.h>
 #define PI 3.14159265358979323846
@@ -154,22 +153,22 @@ void SolveCubic(double  a,
   }
 }
 ```
-Notice that the function makes several math function calls; which implies that each of them is also implemented by Vivado HLS into the FPGA accelerator. These were controlled by the constraints input file during the D2 execution. The accelerator was able to a achieve a significant amount of parallelism. See \autoref{fig:DSA2}.
+Notice that the function makes several math function calls; which implies that each of them is also implemented by Vivado HLS into the FPGA accelerator. These were controlled by the constraints input file during the D2 execution. The accelerator was able to a achieve a significant amount of parallelism. In \autoref{fig:DSA2} we can see that the accelerator again, provided a significant performance boost, but the overhead of passing arguments to the DSA via a memory mapped interface is too much to overcome.
 
-![DSA 2 comparison\label{fig:DSA2}](dsa2_cmp.png){ width=30% }
+![DSA 2 comparison\label{fig:DSA2}](DSA2.png)
 
 ## DSA 3
-The third DSA is an SB that was identified in multiple workloads. While it looks quite simple, it highlights the serialisation that occurs in a CPU with a limited number of FP multiply units. This highlights an aspect of D2 to find every possible SB and the power of normalization to identify where SBs are reused in multiple workloads. See \autoref{fig:DSA3}.
+The third DSA is an SB that was identified in multiple workloads. While it looks quite simple, it highlights the serialisation that occurs in a CPU with a limited number of FP multiply units. This highlights an aspect of D2 to find every possible SB and the power of normalization to identify where SBs are reused in multiple workloads. In \autoref{fig:DSA3} the table shows that the number of cycles to compute the result pales in comparision to the interface overhead.
 ```c
 float acc3(float re, float im)
 {
   return (re * re + im * im) * 0.5;
 }
 ```
-![DSA 2 comparison\label{fig:DSA3}](dsa3_cmp.png){ width=30% }
+![DSA 3 comparison\label{fig:DSA3}](DSA3.png)
 
 ## DSA 4
-We expected this next one to do better. But on further inspection we discovered the ARM CPU has a sqrt assembly language instruction. This points to the importance of understanding your target hardware and that many things need to be considered whenever you embark on the acceleration journey. Contrast this DSA with the next one that in addition to the sqrt function, has other floating point operations. See \autoref{fig:DSA4}.
+We expected this next one to do better. But on further inspection we discovered the ARM CPU has a sqrt assembly language instruction. This points to the importance of understanding your target hardware and that many things need to be considered whenever you embark on the acceleration journey. Contrast this DSA \autoref{fig:DSA4} with the next one that in addition to the sqrt function, has other floating point operations.
 ```c
 #include <math.h>
 
@@ -178,10 +177,10 @@ float acc4(float re, float im, float d)
   return sqrt(re*re+im*im)/d;
 }
 ```
-![DSA 4 comparison\label{fig:DSA4}](dsa4_cmp.png){ width=30% }
+![DSA 4 comparison\label{fig:DSA4}](DSA4.png)
 
 ## DSA 5
-Again this DSA demonstrates that finding a granularity between a BB and full function can yield a DSA that can be used by multiple work loads and provide a significant performance boost to the overall computing task. See \autoref{fig:DSA5}.
+Again this DSA \autoref{fig:DSA5} demonstrates that finding a granularity between a BB and full function can yield a DSA that can be used by multiple work loads and provide a significant performance boost to the overall computing task.
 ```c
 #include <math.h>
 
@@ -192,17 +191,17 @@ float acc5(float an, float bn, float re, float im, float d)
   return sqrt(re*re + im*im) / d;
 }
 ```
-![DSA 5 comparison\label{fig:DSA5}](dsa5_cmp.png){ width=30% }
+![DSA 5 comparison\label{fig:DSA5}](DSA5.png)
 
 ## DSA 6
-This DSA was not complex enough to overcome the the overhead of our memory mapped CPU/FPGA interface. See \autoref{fig:DSA6}. It is a degenerate example of a SB that is, in fact, just a BB and demonstrates the need for the larger SB granularity.
+This DSA \autoref{fig:DSA6} was not complex enough to overcome the the overhead of our memory mapped CPU/FPGA interface. It is a degenerate example of a SB that is, in fact, just a BB and demonstrates the need for the larger SB granularity.
 ```c
 float acc6(float a, float b, float c, float d)
 {
   return a * b * c / d;
 }
 ```
-![DSA 6 comparison\label{fig:DSA6}](dsa6_cmp.png){ width=30% }
+![DSA 6 comparison\label{fig:DSA6}](DSA6.png)
 
 # Conclusion and Future Work
 Our main intention has been to make the D2 tool available as open source to the DSA community, since the previous version of our lab's work was unavailable as OSS. We believe there is a future in right-sizing the DSA and that the D2 tool can provide valuable input to that end. Because there are very few OSS tools geared towards automation of DSA identification, our hope is that the D2 tool will be utilized and expanded upon within the DSA community to become a valuable resource and additionally, make the concept of the SB more accessible to the community as a whole. We feel there is merit in the SB granularity, and providing the tool as OSS will assist in the adoption of the SB.
