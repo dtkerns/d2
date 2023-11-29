@@ -211,4 +211,5 @@ Typically, DSA optimizations are done after rigorous profiling is performed on a
 # Acknowledgments
 The authors would like to thank Kevin Gomez from the University of Arizona ECE lab and TBD from Rincon Research Corporation for their assistance in implementing some of the FPGA accelerators.
 
+
 # References
