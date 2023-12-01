@@ -34,11 +34,11 @@ Previous work has used either a function level [@canis13_legup] (coarse) or a ba
 
 The following illustrates the valid SB boundaries. The one-in, one-out aspect is key to its implementation, as it enables programs to be analyzed as easily as BBs, but offers more flexibility and better efficiency in generating DSAs.
 
- ![(a) A CFG\label{fig:1a}](cfg.png){ width=25% }
- ![(b) Valid SBs\label{fig1b}](valid_SB.png){ width=25% }
- ![(c) Invalid SB\label{fig:1c}](invalid_sb.png){ width=25% }
+ ![\(a\) A CFG\label{fig:1a}](cfg.png){ height=300px }
+ ![\(b\) Valid SBs\label{fig:1b}](valid_SB.png){ height=398px }
+ ![\(c\) Invalid SB\label{fig:1c}](invalid_sb.png){ height=398px }
  
- Super-block illustration: (a) Example CFG, (b) Valid superblocks, (c) Invalid superblock
+ Super-block illustration: \autoref{fig:1a}, \autoref{fig:1b}, \autoref{fig:1c}
 
 This paper describes an open-source tool for identifying and generating DSAs given a set of input workloads. We describe how you can use the tool to identify good candidates for acceleration at the SB granularity in a resource-constrained target, no matter what domain your application lives in. While we use FPGAs for our case study, the concept of implementing a DSA from SBs transfers well to other DSA implementation technologies.
 
