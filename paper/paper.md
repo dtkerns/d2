@@ -34,9 +34,9 @@ Previous work has used either a function level [@canis13_legup] (coarse) or a ba
 
 The following illustrates the valid SB boundaries. The one-in, one-out aspect is key to its implementation, as it enables programs to be analyzed as easily as BBs, but offers more flexibility and better efficiency in generating DSAs.
 
- ![\(a\) A CFG\label{fig:1a}](cfg.png){ height=300px }
- ![\(b\) Valid SBs\label{fig:1b}](valid_SB.png){ height=398px }
- ![\(c\) Invalid SB\label{fig:1c}](invalid_sb.png){ height=398px }
+ ![a) A CFG\label{fig:1a}](cfg.png){ height=398pt }
+ ![b) Valid SBs\label{fig:1b}](valid_SB.png){ height=398pt }
+ ![c) Invalid SB\label{fig:1c}](invalid_sb.png){ height=398pt }
  
  Super-block illustration: \autoref{fig:1a}, \autoref{fig:1b}, \autoref{fig:1c}
 
