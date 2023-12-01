@@ -32,12 +32,10 @@ DSAs, as opposed to general purpose architectures or ASICs, continue to be an at
 
 Previous work has used either a function level [@canis13_legup] (coarse) or a basic block (BB) [@kumar17_needle], which is much finer, as the division point between the CPU and accelerator. A BB is a division, by the compiler, of the source code that has a single entry point and a single exit point. A BB can be comprised of a single statement (of the high-level language) or multiple statements depending on the generated instruction flow of the compiled code. While the BB granularity would seem like the best fit for identifying and generating DSAs, [@limaye21_dosage] found that they were prohibitively overhead-prone due to the large number and small size of generated accelerators. Thus, they introduced a new granularity called the _superblock_. A superblock (SB) is a collection of BBs, from a control flow graph (CFG) perspective, that also has a single entry point and a single exit point 
 
-The following illustrates the valid SB boundaries. The one-in, one-out aspect is key to its implementation, as it enables programs to be analyzed as easily as BBs, but offers more flexibility and better efficiency in generating DSAs.
+The following \autoref{fig:cfg} illustrates the valid SB boundaries. The one-in, one-out aspect is key to its implementation, as it enables programs to be analyzed as easily as BBs, but offers more flexibility and better efficiency in generating DSAs.
 
- ![1a) A CFG     1b) Valid SBs    1c) Invalid SB\label{fig:cfg}](SB.png){ height=200pt }
+ ![Super-block illustration:  1a) A CFG     1b) Valid SBs    1c) Invalid SB\label{fig:cfg}](SB.png){ height=200pt }
  
- Super-block illustration: \autoref{fig:cfg}
-
 This paper describes an open-source tool for identifying and generating DSAs given a set of input workloads. We describe how you can use the tool to identify good candidates for acceleration at the SB granularity in a resource-constrained target, no matter what domain your application lives in. While we use FPGAs for our case study, the concept of implementing a DSA from SBs transfers well to other DSA implementation technologies.
 
 # Background
