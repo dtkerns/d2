@@ -13,7 +13,7 @@ authors:
 affiliations:
 - name: Department of Electrical & Computer Engineering, University of Arizona, Tucson, Arizona, USA
   index: 1
-date: Nov 2023
+date: 01 December 2023
 bibliography: paper.bib
 ---
 
