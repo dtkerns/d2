@@ -1,6 +1,6 @@
 %You can copy bibtex citations directly from Google Scholar. Enable through: Settings -> Show links to import ...[Bibtex]; Search for paper title and the bibtex link should appear. Click on it, and copy/past here.
 
-@incollection{zeigler04_neuronModel,
+@article{zeigler04discrete,
   title={Discrete event abstraction: An emerging paradigm for modeling complex adaptive systems},
   author={Zeigler, Bernard P},
   booktitle={Perspectives on Adaptation in Natural and Artificial Systems},
@@ -14,7 +14,17 @@
   author={Guo, Zhi and Najjar, Walid and Vahid, Frank and Vissers, Kees},
   booktitle={Proceedings of the 2004 ACM/SIGDA 12th international symposium on Field programmable gate arrays},
   pages={162--170},
-  year={2004}
+  year={2004},
+  isbn = {1581138296},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  url = {https://doi.org/10.1145/968280.968304},
+  doi = {10.1145/968280.968304},
+  numpages = {9},
+  keywords = {analysis, reconfigurable computing, FPGA, VHDL, performance},
+  location = {Monterey, California, USA},
+  abstract = {The speedup over a microprocessor that can be achieved by implementing some programs on an FPGA has been extensively reported. This paper presents an analysis, both quantitative and qualitative, at the architecture level of the components of this speedup. Obviously, the spatial parallelism that can be exploited on the FPGA is a big component. By itself, however, it does not account for the whole speedup.In this paper we experimentally analyze the remaining components of the speedup. We compare the performance of image processing application programs executing in hardware on a Xilinx Virtex E2000 FPGA to that on three general-purpose processor platforms: MIPS, Pentium III and VLIW. The question we set out to answer is what is the inherent advantage of a hardware implementation over a von Neumann platform. On the one hand, the clock frequency of general-purpose processors is about 20 times that of typical FPGA implementations. On the other hand, the iteration level parallelism on the FPGA is one to two orders of magnitude that on the CPUs. In addition to these two factors, we identify the efficiency advantage of FPGAs as an important factor and show that it ranges from 6 to 47 on our test benchmarks. We also identify some of the components of this factor: the streaming of data from memory, the overlap of control and data flow and the elimination of some instruction on the FPGA. The results provide a deeper understanding of the tradeoff between system complexity and performance when designing Configurable SoC as well as designing software for CSoC. They also help understand the one to two orders of magnitude in speedup of FPGAs over CPU after accounting for clock frequencies.},
+  series = {FPGA '04}
 }
 
 @misc{unspecified21_vivado_hls,
@@ -161,7 +171,8 @@ numpages = {7}
   booktitle={2017 IEEE International Symposium on High Performance Computer Architecture (HPCA)},
   pages={565--576},
   year={2017},
-  organization={IEEE}
+  organization={IEEE},
+  doi={10.1109/HPCA.2017.59}
 }
 
 @online{willadsen23_meld,
