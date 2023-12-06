@@ -1,25 +1,3 @@
-# Statement of need
-D2 enables computer architects and researchers to easily generate domain-specific accelerators (DSAs) given a set of input workloads based on the super block (SB) granularity. To the best of our knowledge, no such automation tool currently exists. D2 is a shell script “driver” that takes two arguments: the top directory of the user’s source code to be analyzed and a working directory for D2 to store its intermediate data.
-
-# Installation Instructions
-
-D2 is intended run on a Unix/Linux system. To build D2, cd to the src directory and type `make`, then add the D2 bin directory to your PATH
-
-# Example usage
-
- - modify your project Makefiles to generate .ll and .llg files (see below)
- - run the D2 software
-   $ PATH=$D2BASE/bin:$PATH
-   $ d2 $MYPRJBASE /tmp/myproj
- - results are found in the file sbselected in the output directory
- - if you modify the constraints file, you can re-run without remaking the .ll/.llg files with the -m option
-
-# Community guidelines
-
-If you'd like to contrubute to D2, please submit your request on github or contact the authors/maintainers
-
-# Functionality documentation
-
 given: a directory structure of source with makefiles
 
 1) modify the makefile(s), 
@@ -37,14 +15,12 @@ it generates two files that contain the list of .ll and .llg files
 The .ll files are the Basic Block nodes each containting the code for each node
 the BB's are named with numeric labels, and each line of the node is unique register name
 
-```
 9:
   %10 = sext i32 %3 to i64
   %11 = getelementptr inbounds i8*, i8** %2, i64 %10
   %12 = sext i32 %1 to i64
   %13 = getelementptr inbounds i8*, i8** %0, i64 %12
   br label %14
-```
 
 The .llg files are similar except that they have debugging information that points each BB to a set of lines in the original source code.
 
@@ -73,10 +49,9 @@ The user is then presented with each file of constraints, and they should remove
 
 6) create a BB database (DB) DB here is a delimited (usually colon) list of fields
 ex:
-```
+
 ./lame/lame3.70/quantize.ll:amp_scalefac_bands:58:L_amp_scalefac_bands_270:mul 4:fmul 4:udiv 0:sdiv 0:fdiv 0:urem 0:srem 0:frem 0:
 ./lame/lame3.70/vbrquantize.ll:VBR_iteration_loop_new:26:L_VBR_iteration_loop_new_116:mul 0:fmul 3:udiv 0:sdiv 0:fdiv 0:urem 0:srem 0:frem 0:llvm_fabs_v2f64,llvm_sqrt_v2f64,llvm_sqrt_v2f64,llvm_fabs_v2f64,llvm_sqrt_v2f64,llvm_sqrt_v2f64,llvm_fabs_v2f64,llvm_sqrt_v2f64,llvm_sqrt_v2f64
-```
 
 7) create a loop DB
 
@@ -89,11 +64,9 @@ ex:
 
 9) rank order BB (DB)
 
-```
 ./jpeg/jpeg-6a/jdcoefct.ll:L_decompress_onepass_108:5:0:0027,0028,0034
 ./jpeg/jpeg-6a/jdcoefct.ll:L_consume_data_98:5:0:0005,0007
 ./jpeg/jpeg-6a/jdcoefct.ll:L_consume_data_123:5:0:0005
-```
 
 10) separate each BB in the .ll file into individual files
 
@@ -101,20 +74,15 @@ ex:
 
 12) rank order normalized files (DB)
 
-```
 ./lame/lame3.70/newmdct.bb/L_mdct_sub48_408.norm
 ./lame/lame3.70/newmdct.bb/L_mdct_sub48_520.norm
 ./lame/lame3.70/psymodel.bb/L_L3psycho_anal_1857.norm
 ./lame/lame3.70/newmdct.bb/L_mdct_sub48_488.norm
-```
 
 13) identify SB w/ high ranked BBs (DB)
 
-```
 ./jpeg/jpeg-6a/jdcoefct.db.d/g0061.dot
 ./jpeg/jpeg-6a/jdcoefct.db.d/g0062.dot
 ./jpeg/jpeg-6a/jdcoefct.db.d/g0058.dot
 ./jpeg/jpeg-6a/jdcoefct.db.d/g0059.dot
-```
-
 
