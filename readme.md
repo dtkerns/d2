@@ -9,8 +9,10 @@ D2 is intended run on a Unix/Linux system. To build D2, cd to the src directory 
 
  - modify your project Makefiles to generate .ll and .llg files (see below)
  - run the D2 software
+```
    $ PATH=$D2BASE/bin:$PATH
    $ d2 $MYPRJBASE /tmp/myproj
+```
  - results are found in the file sbselected in the output directory
  - if you modify the constraints file, you can re-run without remaking the .ll/.llg files with the -m option
 
