@@ -1,4 +1,4 @@
-// the sb app is called twice by D2, once in constraint mode to get the list of constrints from
+// the sb app is called twice by D2, once in constraint mode to get the list of contraints from
 // each Basic Block, then a second time in SB mode to get the SBs. SB mode was written first
 // Once the realization that the constraint mode also needed to fully parse the dot file,
 // it became obvious to combine the two apps into a single app.
