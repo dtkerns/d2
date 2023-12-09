@@ -64,4 +64,5 @@ Ranking is accomplished by keeping metrics on each BB. Often, several SBs are su
 
 # Conclusion
 We believe there is a future in right-sizing the DSA and that the **D2** tool can provide valuable input to that end. Because there are very few OSS tools geared towards the automation of DSA identification, we hope that the **D2** tool will be utilized and expanded upon within the computer architecture community to become a valuable resource and additionally, make the concept of the SB more accessible to the community as a whole. Our experiments have demonstrated the merit in the SB granularity, and providing the tool as OSS will assist in the adoption of the SB approach to designing DSAs.
+
 # References
