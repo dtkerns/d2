@@ -1,3 +1,8 @@
+// the sb app is called twice by D2, once in constraint mode to get the list of constrints from
+// each Basic Block, then a second time in SB mode to get the SBs. SB mode was written first
+// Once the realization that the constraint mode also needed to fully parse the dot file,
+// it became obvious to combine the two apps into a single app.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,10 +82,11 @@ bool contains(const std::vector<std::string> &list, const std::string &name)
   return found;
 }
 
+// output for both modes happens here
 void ppsbv(int constr)
 {
   for (int i = 0; i < sbv.size(); i++) {
-    if (constr == 0) {
+    if (constr == 0) { // SB mode, print the SBs
       if (skiplist.size()) {
         bool skip = false;
         for (int c = 0; c < sbv[i].constraints.size(); c++) {
@@ -93,7 +99,7 @@ void ppsbv(int constr)
           continue;
         }
       }
-      printf("digraph G {\n");
+      printf("digraph G {\n"); // start of a new SB
       printf("  compound=true;\n");
       printf("  subgraph cluster_%s_%d {\n", sbv[i].name.c_str(), i);
       printf("    label=\"%s_%d\";\n", sbv[i].name.c_str(), i);
@@ -111,7 +117,7 @@ void ppsbv(int constr)
         printf("  %s -> %s [ltail=cluster_%s_%d];\n", firstLabel.c_str(), sbv[i].constraints[c].c_str(), sbv[i].name.c_str(), i);
       }
       printf("}\n");
-    } else {
+    } else { // constraint mode, just print the lists 
       for (int c = 0; c < sbv[i].constraints.size(); c++) {
         printf("%s\n", /* firstLabel.c_str(), */ sbv[i].constraints[c].c_str());
       }
@@ -259,6 +265,8 @@ bool SB::addTolist(std::vector<Node> &fullList)
   return ret;
 }
 
+// constraints are functions called by a Basic Block (BB), they determine if a BB, and thus a SB,
+// are suitable for a DSA
 void SB::addConstraint(const std::string s) // add unique strings
 {
   bool inList = false;
@@ -364,6 +372,7 @@ void findSB(std::map<std::string, std::vector<Node> > &tree)
   }
 }
 
+// The parse routine reads the .dot (CFG) file into the vector of nodes
 std::map<std::string, std::vector<Node> > parse(FILE *fd)
 {
   std::map<std::string, std::vector<Node> > tree;
@@ -447,6 +456,7 @@ continue;
   return tree;
 }
 
+// the skip list is the list of constraints determined in a previous run
 int readSkipList(char *ffile)
 {
   FILE *sk = NULL;
@@ -474,7 +484,7 @@ int main(int argc, char **argv)
   int opt;
   while ((opt = getopt(argc, argv, "cf:s")) != -1) {
     switch (opt) {
-    case 'c':
+    case 'c': // constraint list mode
       constr = 1;
       break;
     case 'f':
