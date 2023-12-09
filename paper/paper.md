@@ -25,6 +25,7 @@ The DSA field currently offers few, if any, open-source automation tools. An imp
 
 # Key aspects of D2
 This is a follow-on work of [@limaye21_dosage] except re-engineered from the ground up, with special emphasis on making it open source. Additionally, the novel parts are:
+
  - user-controlled constraints
  - normalization of BBs
  - ranking at the BB level and then mapping the BB ranking onto SBs
