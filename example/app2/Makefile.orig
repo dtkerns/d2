@@ -1,0 +1,12 @@
+CFLAGS +=  -std=c99
+LDFLAGS += -lm
+
+SRC = app1.c
+APP = $(SRC:.c=)
+
+all: $(APP)
+
+app1: app1.c
+
+clean:
+	$(RM) $(APP)
