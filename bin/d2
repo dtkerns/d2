@@ -3,13 +3,13 @@
 DOSAGE=$(dirname $(realpath $0))
 
 usage() {
-  echo "usage: $0 [-m] [output_dir]"
+  echo "usage: $0 [-m] output_dir"
   echo "    -m  don't run make to generate .ll/.llg files"
   exit 1
 }
 
 domake=1
-TEMP=$(getopt -o 'hm' -- "$@")
+TEMP=$(getopt -o '?hm' -- "$@")
 eval set -- "$TEMP"
 unset TEMP
 while true
@@ -21,11 +21,11 @@ do
   esac
 done
 
-if [ $# -gt 0 ]
+if [ $# -gt 0 -a -d "$1" ]
 then
   OD=$(realpath $1) # output dir
 else
-  OD=${TMPDIR-/tmp}/d$$
+  usage
 fi
 
 echo $DOSAGE
@@ -129,7 +129,7 @@ do
 done
 echo rank order normalized files
 #awk -F: '$3 > 0 && $4 > 0 && $5 != "" { dir = $1; file = $2; sub(".ll$", ".bb", dir); print dir "/" file ".sig"; }' $OD/rankorder > $OD/rosigfiles
-time awk -F: '$3 > 0 && $4 > 0 && $5 != "" { dir = $1; file = $2; sub(".ll$", ".bb", dir); print dir "/" file ".norm"; }' $OD/rankorder > $OD/ronormfiles
+time awk -F: '$3 > 0 && $4 >= 0 && $5 != "" { dir = $1; file = $2; sub(".ll$", ".bb", dir); print dir "/" file ".norm"; }' $OD/rankorder > $OD/ronormfiles
 #$DOSAGE/bbselect $OD/rosigfiles > bbsel_sig
 echo bbselect
 time $DOSAGE/bbselect.py $OD/ronormfiles > $OD/bbsel_norm
