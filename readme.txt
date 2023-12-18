@@ -10,7 +10,8 @@ also, a second pass with a CFLAGS -g with the conditional
 ifeq ($(llg),1)
 to get a .llg file
 
-2) run the d2 script, passing the top of the tree it calls make twice, first with ll=1 then a second time w/ llg=1
+2) run the d2 script from the top of the tree with the path to the output directory as an argument.
+it calls make twice, first with ll=1 then a second time w/ llg=1
 it generates two files that contain the list of .ll and .llg files
 The .ll files are the Basic Block nodes each containting the code for each node
 the BB's are named with numeric labels, and each line of the node is unique register name

@@ -7,7 +7,7 @@ D2 is intended run on a Unix/Linux system. To build D2, cd to the src directory 
 
 # Dependencies
 D2 requires an LLVM compiler (e.g. clang) to be used for LLVM generation. Additionaly, the clang utility `opt` is also used.
-It is not required to completely switch your application to use clang, it is only used for SB intentification.
+It is not required to switch your application to use clang, it is only used for SB intentification.
 
 # Example usage
 
@@ -15,7 +15,8 @@ It is not required to completely switch your application to use clang, it is onl
  - run the D2 software
 ```
    $ PATH=$D2BASE/bin:$PATH
-   $ d2 $MYPRJBASE /tmp/myproj
+   $ cd $MYPRJBASE
+   $ d2 /tmp/myproj
 ```
  - results are found in the file `sbselected` in the output directory
  - if you modify the constraints file, you can re-run without remaking the .ll/.llg files with the -m option
