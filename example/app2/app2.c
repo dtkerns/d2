@@ -39,7 +39,7 @@ int main(int argc, char **argv)
   uint64_t x = 0x5a5a5a5a5a;
   float f = 0.0;
   for (int i = 0; i < 1000000; i++) {
-    x = (i & 1 == 1) ? rotf(i, x, &f) : rotf2(i, x, &f);
+    x = ((i & 1) == 1) ? rotf(i, x, &f) : rotf2(i, x, &f);
     if ((i % 5209) == 0) {
        printf("%d %" PRIu64 "\n", i, x);
     }
