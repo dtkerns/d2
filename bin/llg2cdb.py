@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys,os,re
-
+debug=False
 p_subr0 = re.compile("[(].*")
 
 def llg2cdb(filename):
@@ -23,21 +23,21 @@ def llg2cdb(filename):
       for f in flds:
         if f[0] == '@':
           fnm = re.sub(p_subr0, "", f[1:])
-          print("start of function %s" % fnm, file=sys.stderr)
+          if debug: print("start of function %s" % fnm, file=sys.stderr)
           break
       curBB = "L_entry_" + fnm
-      print("curBB %s" % curBB, file=sys.stderr)
+      if debug: print("curBB %s" % curBB, file=sys.stderr)
       dbg[curBB] = []
     # start of BB
     if len(flds[0]) and flds[0][-1] == ":":
       BB = flds[0][:-1]
       curBB = "L_" + fnm + "_" + BB
-      print("curBB %s" % curBB, file=sys.stderr)
+      if debug: print("curBB %s" % curBB, file=sys.stderr)
       dbg[curBB] = []
       #print("init1 BB %s" % curBB, file=sys.stderr)
     if flds[0] == ";" and "label" in flds[1]:
       curBB = "L_" + fnm + "_" + flds[1].split(':')[1]
-      print("curBB %s" % curBB, file=sys.stderr)
+      if debug: print("curBB %s" % curBB, file=sys.stderr)
       dbg[curBB] = []
       #print("init2 BB %s" % curBB, file=sys.stderr)
     if len(flds) > 3 and flds[-2] == "!dbg":
@@ -71,5 +71,8 @@ def llg2cdb(filename):
 
 if __name__ == "__main__":
   for f in sys.argv[1:]:
+    if f == '-d':
+      debug=True
+      continue
     llg2cdb(f)
 
