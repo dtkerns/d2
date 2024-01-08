@@ -147,7 +147,7 @@ do
 done
 echo rank order normalized files
 #awk -F: '$3 > 0 && $4 > 0 && $5 != "" { dir = $1; file = $2; sub(".ll$", ".bb", dir); print dir "/" file ".sig"; }' $OD/rankorder > $OD/rosigfiles
-time awk -F: '$3 > 0 && $4 >= 0 && $5 != "" { dir = $1; file = $2; sub(".ll$", ".bb", dir); print dir "/" file ".norm"; }' $OD/rankorder > $OD/ronormfiles
+time awk -F: '$3 >= 0 && $4 >= 0 && $5 != "" { dir = $1; file = $2; sub(".ll$", ".bb", dir); print dir "/" file ".norm"; }' $OD/rankorder > $OD/ronormfiles
 #$DOSAGE/bbselect $OD/rosigfiles > bbsel_sig
 echo bbselect
 time $DOSAGE/bbselect.py $OD/ronormfiles > $OD/bbsel_norm
