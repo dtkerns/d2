@@ -2,6 +2,24 @@
 
 DOSAGE=$(dirname $(realpath $0))
 
+if [ ! -f $DOSAGE/.config ]
+then
+  echo "please run 'make' in the source directory"
+  exit 1
+else
+  source $DOSAGE/.config
+  if [ "$NEWPASSMANAGER" == "implemented" ]
+  then
+    optflags="-passes='print<loops>' -disable-output"
+    if [ $LLVMVER -lt 19 ]
+    then
+      echo "warning: due to a bug in LLVM versions < 19, you will need to add a -O1 (minimum) to CFLAGS in your makefiles"
+    fi
+  else
+    optflags="-analyze --loops"
+  fi
+fi
+
 usage() {
   echo "usage: $0 [-m] output_dir"
   echo "    -m  don't run make to generate .ll/.llg files"
@@ -56,8 +74,8 @@ done > $OD/bbcdb
 echo create loop files
 time for i in $(cat $OD/loll)
 do
-  echo "opt -analyze --loops $i > ${i%%ll}loop" >&2
-  opt -analyze --loops $i > ${i%%ll}loop
+  echo "opt $i $optflags > ${i%%ll}loop" >&2
+  opt $i $optflags > ${i%%ll}loop
 done
 
 echo create dot files
