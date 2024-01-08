@@ -1,5 +1,5 @@
 LLVMVER=$(shell opt --version | awk '/LLVM version/{print $$NF}')
-NEWPASSMANAGER=$(if $(shell opt --help | grep -q -- --passes=;echo $?),implemented,not implemented)
+NEWPASSMANAGER=$(if $(shell opt --help | sed -n '/--passes=/p'),implemented,not implemented)
 $(info LLVMVER=$(LLVMVER) NEWPASSMANAGER=$(NEWPASSMANAGER))
 
 install: versioncheck all
