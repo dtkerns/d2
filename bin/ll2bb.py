@@ -35,7 +35,8 @@ def ll2bb(file):
       print(outfile)
     if flds[0] == ";" and "label" in flds[1]:
       if outf: outf.close()
-      cur = "L_" + nm + "_" + flds[1].split(":")[2]
+      # print(flds[1], file=sys.stderr)
+      cur = "L_" + nm + "_" + flds[1].split(":")[1]
       EO = True
       outfile = os.path.join(pfix, cur)
       outf = open(outfile, "w")
