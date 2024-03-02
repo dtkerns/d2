@@ -6,7 +6,7 @@ D2 enables computer architects and researchers to easily generate domain-specifi
 D2 is intended run on a Unix/Linux system. To build D2, cd to the src directory and type `make`, then add the D2 bin directory to your PATH
 
 # Dependencies
-D2 requires an LLVM compiler (e.g. clang) to be used for LLVM generation. Additionaly, the clang utility `opt` is also used.
+D2 requires an LLVM compiler (e.g. `clang`) and `opt`. (I have only tested with clang)
 It is not required to switch your application to use clang, it is only used for SB intentification.
 
 # Example usage
@@ -23,8 +23,8 @@ It is not required to switch your application to use clang, it is only used for 
 
 # Community guidelines
 
-To contrubute to D2, please submit your request on github or contact the authors/maintainers
+To contribute to D2, please submit your request on github or contact the authors/maintainers
 
 # Functionality documentation
 
-see readme.txt
+see step-by-step.md
