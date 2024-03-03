@@ -19,7 +19,7 @@ It is not required to switch your application to use clang, it is only used for 
    $ d2 /tmp/myproj
 ```
  - results are found in the file `sbselected` in the output directory
- - if you modify the constraints file, you can re-run without remaking the .ll/.llg files with the -m option
+ - if you modify the constraints file, you can re-run without remaking the .ll/.llg files with the `-m` option
 
 # Community guidelines
 
