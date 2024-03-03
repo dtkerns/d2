@@ -1,5 +1,5 @@
 # Statement of need
-D2 enables computer architects and researchers to easily generate domain-specific accelerators (DSAs) given a set of input workloads based on the super block (SB) granularity. To the best of our knowledge, no such automation tool currently exists. D2 is a shell script “driver” that takes two arguments: the top directory of the user’s source code to be analyzed and a working directory for D2 to store its intermediate data.
+D2 enables computer architects and researchers to easily generate domain-specific accelerators (DSAs) given a set of input workloads based on the super block (SB) granularity. To the best of our knowledge, no such automation tool currently exists. D2 is a shell script “driver” and expects to be run from the top directory of the user’s source code to be analyzed. It takes one argument, the working directory for D2 to store its intermediate data.
 
 # Installation Instructions
 
