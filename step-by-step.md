@@ -1,11 +1,11 @@
 # Step-by-step
 
-given: a directory structure of source with makefiles
+Given: a directory structure of C source with makefiles
 
 1) modify the makefile(s), 
-You'll need to set your compiler (`CC` in the Makefile) to one capable of generating LLVM, e.g `clang`. It it not required to switch to this compiler for your project, but only for this step of identifying SB
+You'll need to set your compiler (`CC` in the Makefile) to one capable of generating LLVM, e.g `clang`. It it not required to switch to this compiler for your project, but only for this step of identifying SB.
 
-typically add to CFLAGS: `-S -emit-llvm`
+Typically add to CFLAGS: `-S -emit-llvm`
 with a condition `ifeq ($(ll),1)`
 then anywhere it would make a .o it will build a .ll file instead
 also, a second pass with a CFLAGS `-g` with the conditional
@@ -13,7 +13,10 @@ also, a second pass with a CFLAGS `-g` with the conditional
 to get a .llg file
 
 2) Run the `d2` script from the top of the tree with the path to the output directory as an argument.
-It calls `make` twice, first with `ll=1` then a second time w/ `llg=1
+
+# Internal details:
+
+1) `d2` calls `make` twice, first with `ll=1` then a second time w/ `llg=1
 `. It generates two files that contain the list of `.ll` and `.llg` files
 The `.ll` files are the basic block (BB) nodes each containting the code for each node
 the BB's are named with numeric labels, and each line of the node is a unique register name (e.g.):
@@ -29,7 +32,7 @@ the BB's are named with numeric labels, and each line of the node is a unique re
 
 The `.llg` files are similar except that they have debugging information that points each BB to a set of lines in the original source code.
 
-`d2` calls the script `llg2cdb` on each `.llg` file to create a `.csv` file used as a mapping from BB to the C source line later in the process.
+2) `d2` calls the script `llg2cdb` on each `.llg` file to create a `.csv` file used as a mapping from BB to the C source line later in the process.
 
 3) For each `.ll` file, we call an llvm utility (`opt`) to calculate the number (nesting) of each BB in loops
 `opt -analyze --loops`
