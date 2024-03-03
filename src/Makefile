@@ -2,7 +2,7 @@ LLVMVER=$(shell opt --version | awk '/LLVM version/{print $$NF}')
 NEWPASSMANAGER=$(if $(shell opt --help | sed -n '/--passes=/p'),implemented,not implemented)
 $(info LLVMVER=$(LLVMVER) NEWPASSMANAGER=$(NEWPASSMANAGER))
 
-install: versioncheck all
+install: deps versioncheck all
 	mkdir -p ../bin
 	mv sb ../bin
 
@@ -18,4 +18,7 @@ versioncheck:
 	@echo LLVMVER=$(LLVMVER) > ../bin/.config
 	@echo NEWPASSMANAGER=$(word 1,$(NEWPASSMANAGER)) >> ../bin/.config
 
-.PHONY: versioncheck all
+deps:
+	@which awk cpio find grep python sed sort ; test $$? = 0 || (echo please install any commands not found; exit 1)
+
+.PHONY: deps versioncheck all
