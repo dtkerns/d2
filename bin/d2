@@ -11,9 +11,9 @@ else
   if [ "$NEWPASSMANAGER" == "implemented" ]
   then
     optflags="-passes='print<loops>' -disable-output"
-    if [ $LLVMVER -lt 19 ]
+    if [ $(echo ${LLVMVER} | cut -d. -f1) -lt 19 ]
     then
-      echo "warning: due to a bug in LLVM versions < 19, you will need to add a -O1 (minimum) to CFLAGS in your makefiles"
+      echo "$0: [7mwarning: due to a bug in LLVM versions < 19, you will need to add a -O1 (minimum) to CFLAGS in your makefiles[m"
     fi
   else
     optflags="-analyze --loops"

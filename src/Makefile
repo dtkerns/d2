@@ -15,10 +15,11 @@ clean:
 
 versioncheck:
 	@echo "you appear to be running LLVM version $(LLVMVER) and the new passmanager is $(NEWPASSMANAGER)"
-	@echo LLVMVER=$(LLVMVER) > ../bin/.config
-	@echo NEWPASSMANAGER=$(word 1,$(NEWPASSMANAGER)) >> ../bin/.config
+	@echo export LLVMVER=$(LLVMVER) > ../bin/.config
+	@echo export NEWPASSMANAGER=$(word 1,$(NEWPASSMANAGER)) >> ../bin/.config
+	@test $$(echo $(LLVMVER) | cut -d. -f1) -ge 19 || echo "[7mwarning: due to a bug in LLVM versions < 19, you will need to add a -O1 (minimum) to CFLAGS in your makefiles[m"
 
 deps:
-	@which awk cpio find grep python sed sort ; test $$? = 0 || (echo please install any commands not found; exit 1)
+	@which awk cpio cut find grep python sed sort ; test $$? = 0 || (echo please install any commands not found; exit 1)
 
 .PHONY: deps versioncheck all
