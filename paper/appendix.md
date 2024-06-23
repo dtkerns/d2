@@ -1,19 +1,4 @@
 ---
-title: 'Appendix A: Case studies'
-tags:
- - Domain-specific accelerators
- - computer-aided design
- - resource-constrained systems
- - energy efficient
-authors:
- - name: David T Kerns
-   affiliation: 1
- - name: Tosiron Adegbija
-   affiliation: 1
-affiliations:
-- name: Department of Electrical & Computer Engineering, University of Arizona, Tucson, Arizona, USA
-  index: 1
-date: 01 December 2023
 bibliography: paper.bib
 ---
 
@@ -128,8 +113,3 @@ float acc6(float a, float b, float c, float d)
 }
 ```
 ![DSA 6 comparison\label{fig:DSA6}](DSA6.png){ width=35% }
-
-# Conclusion
-Our main intention has been to make the **D2** tool available as open source to the DSA community since the previous version of our lab\'s work was unavailable as OSS. We believe there is a future in right-sizing the DSA and that the **D2** tool can provide valuable input to that end. Because there are very few OSS tools geared towards the automation of DSA identification, we hope that the **D2** tool will be utilized and expanded upon within the computer architecture community to become a valuable resource and additionally, make the concept of the SB more accessible to the community as a whole. Our experiments have demonstrated the merit in the SB granularity, and providing the tool as OSS will assist in the adoption of the SB approach to designing DSAs. Furthermore, we hope that the community can collaboratively add more features to the tool to make it even more useful for designing DSAs for emerging computing systems.
-
-# References
