@@ -21,13 +21,15 @@ else
 fi
 
 usage() {
-  echo "usage: $0 [-m] output_dir"
+  echo "usage: $0 [-m] [-i] output_dir"
   echo "    -m  don't run make to generate .ll/.llg files"
+  echo "    -i  don't run interactive, mainly used for testing"
   exit 1
 }
 
 domake=1
-TEMP=$(getopt -o '?hm' -- "$@")
+INTERACTIVE=1
+TEMP=$(getopt -o '?hmi' -- "$@")
 eval set -- "$TEMP"
 unset TEMP
 while true
@@ -35,6 +37,7 @@ do
   case "$1" in
     '-h'|'-?') usage ;;
     '-m') domake=0; shift; continue ;;
+    '-i') INTERACTIVE=0; shift; continue ;;
     '--') shift; break ;;
   esac
 done
@@ -93,7 +96,10 @@ do
   then
     echo "sb -c ${i%%ll}dot | sort -u > ${i%%ll}const" >&2
     $DOSAGE/sb -c ${i%%ll}dot | sort -u | grep -v '^sqrt$' > ${i%%ll}const
-    test -s ${i%%ll}const && vim ${i%%ll}const
+    if [ $INTERACTIVE = 1 ]
+    then
+      test -s ${i%%ll}const && vim ${i%%ll}const
+    fi
   fi
   echo "sb -f ${i%%ll}const ${i%%ll}dot > ${i%%ll}sb" >&2
   $DOSAGE/sb -f ${i%%ll}const ${i%%ll}dot > ${i%%ll}sb
