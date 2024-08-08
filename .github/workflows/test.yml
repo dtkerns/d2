@@ -5,6 +5,10 @@ jobs:
     runs-on: ubuntu-latest
     name: build and test
     steps:
+      - name: deps
+        run: |
+             sudo apt update
+             sudo apt install llvm
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build
