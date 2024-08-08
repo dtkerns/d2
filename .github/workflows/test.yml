@@ -8,4 +8,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build
-        run: make -C examples test
+        run: pwd; ls; make -C examples test
