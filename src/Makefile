@@ -28,6 +28,6 @@ deps:
 	@which awk cpio cut clang find grep python3 sed sort ; test $$? = 0 || (echo please install any commands not found; exit 1)
 
 test: install
-	$(MAKE) -C ../example; 
+	$(MAKE) -C ../example $@ 
 
 .PHONY: deps versioncheck all test

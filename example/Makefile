@@ -20,7 +20,7 @@ clean:
 		$(MAKE) -C $$d $@; \
 	done
 
-test: all
+test:
 	mkdir /tmp/testout$$; ../bin/d2 -i /tmp/testout$$
 
 .PHONY: app1 app2
