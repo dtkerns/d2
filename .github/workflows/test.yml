@@ -1,0 +1,11 @@
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: build and test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+          run: make -C examples test
