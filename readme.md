@@ -10,7 +10,7 @@ D2 requires an LLVM compiler (e.g. `clang`) and `opt`. (I have only tested with 
 Some LLVM installations install `opt` as `opt-VV` where VV is a version number. Please resolve with a symbolic link or modify the `d2` script as appropriate.
 It is not required to switch your application to use clang, it is only used for SB intentification.
 Other dependencies:
-`awk bash cpio cut find grep python3 sed sort` and a c++ comipler, either `g++` or `clang++`
+`awk bash cpio cut find grep python3 sed sort` and a c++ compiler, either `g++` or `clang++`
 
 # Example usage
 
