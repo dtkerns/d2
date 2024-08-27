@@ -7,8 +7,8 @@ You'll need to set your compiler (`CC` in the Makefile) to one capable of genera
 
 Typically add to CFLAGS: `-S -emit-llvm`
 with a condition `ifeq ($(ll),1)`
-then anywhere it would make a .o it will build a .ll file instead
-also, a second pass with a CFLAGS `-g` with the conditional
+then anywhere it would make a .o it will build a .ll file instead.
+Also, a second pass with a CFLAGS `-g` with the conditional
 `ifeq ($(llg),1)`
 to get a .llg file
 
