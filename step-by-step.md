@@ -7,10 +7,10 @@ You'll need to set your compiler (`CC` in the Makefile) to one capable of genera
 
 Typically add to CFLAGS: `-S -emit-llvm`
 with a condition `ifeq ($(ll),1)`
-then anywhere it would make a .o it will build a .ll file instead.
+then anywhere it would build a `.o` file. it will build a `.ll` file instead.
 Also, a second pass with a CFLAGS `-g` with the conditional
 `ifeq ($(llg),1)`
-to get a .llg file
+to get a `.llg` file that includes debugging/symbol information used to map back to the original C source.
 
 2) Run the `d2` script from the top of the tree with the path to the output directory as an argument.
 
