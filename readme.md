@@ -31,3 +31,7 @@ To contribute to D2, please submit your request on github or contact the authors
 # Functionality documentation
 
 see step-by-step.md
+
+# Benchmarks
+
+Quantitative analysis is available as an appendix. see paper/appendix.md 
