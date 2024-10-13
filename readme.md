@@ -34,4 +34,6 @@ see step-by-step.md
 
 # Benchmarks
 
-Quantitative analysis is available as an appendix. see paper/appendix.md 
+Quantitative analysis is available as an appendix. see paper/appendix.md
+
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.06825/status.svg)](https://doi.org/10.21105/joss.06825)
